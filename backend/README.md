@@ -1,6 +1,6 @@
 # The Backend
 
-This folder contains files and logic for the BeFit backend
+This folder contains files and logic for the TutorFinder backend
 
 ## Version
 
