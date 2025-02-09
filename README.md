@@ -1,6 +1,6 @@
-# BeFit
+# TutorFinder
 
-BeFit is a social media fitness app.
+TutorFinder is an app for connecting students with tutors.
 
 ## Contributing
 
