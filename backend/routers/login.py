@@ -1,3 +1,9 @@
+#########################################
+#   TO-DO:                              #
+#     - MAKE TOKENIZATION SYSTEM        #
+#     - MAKE PASSWORD HASH              #
+#########################################
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 from ..db_init import cursor
@@ -74,9 +80,6 @@ async def login(user: User):
         if exists:
             # check if password for that username is correct
             if exists[1] == user.password:
-                #########################################
-                #  MAKE THIS A REAL TOKEN LOGIN SYSTEM  #
-                #########################################
                 token = 'hjabdijhawbdiuawndawndiwndoiwadnaoindsdn'
             else:
                 valid = False
