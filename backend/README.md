@@ -25,8 +25,13 @@ To get the backend up and running perform the following...
 
 ## DB Driver
 
-Driver install can be found here:
+Driver install can be found here (for Linux):
 https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver16&tabs=alpine18-install%2Calpine17-install%2Cdebian8-install%2Credhat7-13-install%2Crhel7-offline
 
 Instructions for setup can be found here:
 https://github.com/mkleehammer/pyodbc/wiki/Connecting-to-SQL-Server-from-Linux
+
+Message Nate for connection details (server IP, UID, PWD)
+- Server IP will go in odbc.ini
+- Make OS environ variables out of UID (call it TF_UID) and
+  PWD (call it TF_PWD) for security sake
