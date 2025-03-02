@@ -25,12 +25,35 @@ async def login(user: User):
     # check if password for that username is correct
     return {'user': user.username, 'status': 'valid'}
 
+
+
 """
 Allow user to signup for the system
 """
 @router.post('/signup')
 async def signup(user: User):
-    # validate username and password, basic length & char check
+
+    valid = True
+    errormsg = 'none'
+
+    # validate username, basic length & alphanumeric check
+    if (len(user.username) <= 0  or 
+        len(user.username) >= 30 or
+        not user.username.isalnum()):
+        valid = False
+        errormsg = 'username'
+
+    # validate password, basic length check
+    if (len(user.password) <= 0  or 
+        len(user.password) >= 30):
+        valid = False
+        if errormsg == 'username':
+            errormsg = 'username+password'
+        else:
+            errormsg = 'password'
+
     # check the database to see if username already exists
     # create new entry for the new user
-    return {'signup': 'successful'}
+    return {'user': user.username,
+            'valid': valid,
+            'errormsg': errormsg}

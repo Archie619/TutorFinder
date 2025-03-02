@@ -22,3 +22,11 @@ To get the backend up and running perform the following...
     - uvicorn api_init:app --reload
 
 4. The backend is now running!
+
+## DB Driver
+
+Driver install can be found here:
+https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver16&tabs=alpine18-install%2Calpine17-install%2Cdebian8-install%2Credhat7-13-install%2Crhel7-offline
+
+Instructions for setup can be found here:
+https://github.com/mkleehammer/pyodbc/wiki/Connecting-to-SQL-Server-from-Linux
