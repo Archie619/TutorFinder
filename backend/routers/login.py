@@ -16,7 +16,7 @@ class User(BaseModel):
     username: str
     password: str
 
-class LoginRespone(BaseModel):
+class LoginResponse(BaseModel):
     token: str | None
     valid: bool
     errormsg: str | None
@@ -62,7 +62,7 @@ def len_alphnum_check(username: str, password: str):
 """
 Allow user to login to the system
 """
-@router.post('/login', response_model=LoginRespone)
+@router.post('/login', response_model=LoginResponse)
 async def login(user: User):
 
     # token is what user gets if/when they successfully login
