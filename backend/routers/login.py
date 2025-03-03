@@ -1,9 +1,7 @@
-#########################################
-#   TO-DO:                              #
-#     - MAKE TOKENIZATION SYSTEM        #
-#     - MAKE PASSWORD HASH              #
-#########################################
-
+import bcrypt
+import datetime
+import jwt
+import os
 from fastapi import APIRouter
 from pydantic import BaseModel
 from ..db_init import cursor
@@ -75,12 +73,20 @@ async def login(user: User):
 
     # check the database to see if username exists
     if valid:
-        cursor.execute("SELECT Username, Password FROM Users WHERE Username = ?", (user.username,))
+        cursor.execute('SELECT Username, PasswordHash '
+                       'FROM Users ' 
+                       'WHERE Username = ?', (user.username,))
         exists = cursor.fetchone()
         if exists:
             # check if password for that username is correct
-            if exists[1] == user.password:
-                token = 'hjabdijhawbdiuawndawndiwndoiwadnaoindsdn'
+            if bcrypt.checkpw(user.password.encode(), exists[1].encode()):
+                # create the user's token
+                expire_time = (datetime.datetime.now(datetime.timezone.utc) + 
+                               datetime.timedelta(minutes=30))
+                token = jwt.encode({'username': user.username,
+                                    'expiration': expire_time.isoformat()},
+                                    os.environ['TF_TokenizerKey'],
+                                    "RS256")
             else:
                 valid = False
                 errormsg = 'password is not correct'
@@ -105,14 +111,20 @@ async def signup(user: User):
 
     # check the database to see if username already exists
     if valid:
-        cursor.execute("SELECT Username FROM Users WHERE Username = ?", (user.username,))
+        cursor.execute('SELECT Username '
+                       'FROM Users ' 
+                       'WHERE Username = ?', (user.username,))
         exists = cursor.fetchone()
         if exists:
             valid = False
             errormsg = 'username exists'
         else:
+            # hash the password
+            salt = bcrypt.gensalt()
+            hashedpw = bcrypt.hashpw(user.password.encode(), salt)
             # create new entry for the new user
-            cursor.execute("INSERT INTO Users VALUES (?, ?)", (user.username, user.password))
+            cursor.execute('INSERT INTO Users '
+                           'VALUES (?, ?)', (user.username, hashedpw))
             cursor.commit()
 
     return {'user': user.username,
