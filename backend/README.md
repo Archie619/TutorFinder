@@ -35,3 +35,21 @@ Message Nate for connection details (server IP, UID, PWD)
 - Server IP will go in odbc.ini
 - Make OS environ variables out of UID (call it TF_UID) and
   PWD (call it TF_PWD) for security sake
+
+
+## Useful Commands
+
+# Windows specific
+Activate venv:
+In /scripts
+  - Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
+    - .\activate
+
+uvicorn backend.api_init:app --reload
+
+curl -X POST -H "Content-Type: application/json" -d "{\"username\":\"Luka\",\"password\":\"Doncic\"}" http://localhost:8000/login
+
+To set Environment Variables to values with new lines, use powershell (@" "@)
+You must then restart your CMD windows for the changes to take effect
+
+
