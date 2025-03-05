@@ -44,3 +44,20 @@ Run unit tests before pushing code to the remote repo to ensure nothing has brok
 
 To run all unit tests:
 - pytest --import-mode=importlib -v -s
+
+## Useful Commands
+
+# Windows specific
+Activate venv:
+In /scripts
+  - Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
+    - .\activate
+
+uvicorn backend.api_init:app --reload
+
+curl -X POST -H "Content-Type: application/json" -d "{\"username\":\"...\",\"password\":\"...\"}" http://localhost:8000/login
+
+To set Environment Variables to values with new lines, use powershell (@" "@)
+You must then restart your CMD windows for the changes to take effect
+
+
