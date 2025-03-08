@@ -19,6 +19,13 @@ class ClassSpecification(BaseModel):
     id: str | None
     name: str | None
 
+class AddUserToClassSpecification(BaseModel):
+    token: str
+    designation: str
+    dept: str
+    id: str
+    name: str
+
 class AddClassResponse(BaseModel):
     username: str | None
     addedclass: str | None
@@ -42,6 +49,10 @@ class SearchClassesResponse(BaseModel):
 Decode a user token, check validity
 '''
 def decode_token(usertoken: UserToken):
+
+    username = None
+    validity = True
+    errormsg = None
 
     try: 
         payload = jwt.decode(usertoken.token, 
@@ -67,20 +78,56 @@ def decode_token(usertoken: UserToken):
 Add a user to a class
 '''
 @router.post('/classes/add', response_model=AddClassResponse)
-async def add_class(request: ClassSpecification):
-
-    user = None
-    classtoadd = None
-    valid = True
-    errormsg = None
+async def add_class(request: AddUserToClassSpecification):
 
     # decode the token
     user, valid, errormsg = decode_token(request)
 
-    # check if the requested class exists
+    # confirm designation is 'student' or 'tutor'
+    if request.designation not in ['student', 'tutor']:
+        valid = False
+        errormsg = 'invalid designation'
+
+    if valid:
+        # check if the requested class exists
+        cursor.execute('SELECT CourseID '
+                       'FROM Courses '
+                       'WHERE CourseDept = ? AND CourseDeptID = ? AND CourseName = ?',
+                       (request.dept, request.id, request.name))
+        cid = cursor.fetchone()
+        
+        # if the requested class doesn't exist, create it
+        if cid is None:
+            cursor.execute('INSERT INTO Courses VALUES (?, ?, ?)', 
+                        (request.dept, request.id, request.name))
+            cursor.commit()
+            cursor.execute('SELECT CourseID '
+                           'FROM Courses '
+                           'WHERE CourseDept = ? AND CourseDeptID = ? AND CourseName = ?',
+                           (request.dept, request.id, request.name))
+            cid = cursor.fetchone()
+        
+        cid = cid[0]
+        
+        # grab the UserID for the user
+        cursor.execute('SELECT UserID FROM Users WHERE Username = ?', (user,))
+        uid = cursor.fetchone()[0]
+        
+        # confirm user is not already in the class
+        cursor.execute('SELECT UserID FROM UserCourses WHERE UserID = ? AND CourseID = ?', (uid, cid))
+        inclass = cursor.fetchone()
+
+        if not inclass:
+            cursor.execute('INSERT INTO UserCourses VALUES (?, ?, ?)', (uid, cid, request.designation))
+            cursor.commit()
+        else:
+            valid = False
+            errormsg = 'user already in class'
+
+    addedclass = request.dept + ' ' + request.id + ' ' + request.name
 
     return {'username': user,
-            'addedclass': classtoadd,
+            'addedclass': addedclass,
             'valid': valid,
             'errormsg': errormsg}
 
@@ -91,11 +138,8 @@ Retrieve user's classes, user determined by their token
 '''
 @router.get('/classes', response_model=LoadClassesResponse)
 async def load_classes(token: UserToken):
-    
-    user = None
+
     classes = []
-    valid = True
-    errormsg = None
 
     # decode the token
     user, valid, errormsg = decode_token(token)
