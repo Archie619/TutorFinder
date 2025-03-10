@@ -125,7 +125,7 @@ async def signup(user: User):
             # save date that user registered
             date = datetime.date.today()
             # create new entry for the new user
-            cursor.execute('INSERT INTO Users '
+            cursor.execute('INSERT INTO Users (Username, PasswordHash, JoinDate)'
                            'VALUES (?, ?, ?)', (user.username, hashedpw, date))
             cursor.commit()
             
@@ -133,3 +133,4 @@ async def signup(user: User):
     return {'user': user.username,
             'valid': valid,
             'errormsg': errormsg}
+            
