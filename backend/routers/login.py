@@ -135,3 +135,4 @@ async def signup(user: User):
     return {'user': user.username,
             'valid': valid,
             'errormsg': errormsg}
+            
