@@ -124,7 +124,9 @@ async def signup(user: User):
             hashedpw = bcrypt.hashpw(user.password.encode(), salt)
             # create new entry for the new user
             cursor.execute('INSERT INTO Users '
-                           'VALUES (?, ?)', (user.username, hashedpw))
+                           'VALUES (?, ?, ?, NULL)',
+                           (user.username, hashedpw, 
+                           datetime.datetime.today().strftime('%Y-%m-%d')))
             cursor.commit()
 
     return {'user': user.username,

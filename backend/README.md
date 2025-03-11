@@ -35,3 +35,12 @@ Message Nate for connection details (server IP, UID, PWD)
 - Server IP will go in odbc.ini
 - Make OS environ variables out of UID (call it TF_UID) and
   PWD (call it TF_PWD) for security sake
+
+## Unit Tests
+
+Unit tests should be developed regularly for major parts of the backend.
+
+Run unit tests before pushing code to the remote repo to ensure nothing has broken.
+
+To run all unit tests:
+- pytest --import-mode=importlib -v -s
