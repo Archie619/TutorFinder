@@ -119,7 +119,7 @@ async def profile(user: User):
 '''
 Change profile pic implementation
 '''
-@router.post('/profile', response_model=ProfilePostResponse)
+@router.post('/profile/change_profile_pic', response_model=ProfilePostResponse)
 async def changeProfilePic(user: User = Header(...), userpicture: UserPicture = File(...)):
     
     username, valid, errormsg = decode_token(user)
