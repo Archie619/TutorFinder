@@ -31,6 +31,35 @@ class SignupResponse(BaseModel):
 ########################################
 
 '''
+Decode a user token, check validity
+'''
+def decode_token(token: str):
+
+    username = None
+    validity = True
+    errormsg = None
+
+    try: 
+        payload = jwt.decode(token, 
+                             os.environ['TF_TokenizerKeyDecoder'],
+                             'RS256')
+        username = payload['username']
+
+        # check token expiration
+        if (datetime.datetime.strptime(payload['expiration'], "%Y-%m-%dT%H:%M:%S.%f%z") 
+            <= datetime.datetime.now(datetime.timezone.utc)):
+            validity = False
+            errormsg = 'expired token'
+
+    except jwt.InvalidTokenError:
+        validity = False
+        errormsg = 'invalid token'
+    
+    return username, validity, errormsg
+
+
+
+'''
 Check if username and password follow alphanumeric and
 length rules
 '''

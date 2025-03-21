@@ -4,6 +4,7 @@ import os
 from fastapi import APIRouter
 from pydantic import BaseModel
 from ..db_init import cursor
+from .login import decode_token
 
 router = APIRouter()
 
@@ -46,42 +47,13 @@ class SearchClassesResponse(BaseModel):
 ########################################
 
 '''
-Decode a user token, check validity
-'''
-def decode_token(usertoken: UserToken):
-
-    username = None
-    validity = True
-    errormsg = None
-
-    try: 
-        payload = jwt.decode(usertoken.token, 
-                             os.environ['TF_TokenizerKeyDecoder'],
-                             'RS256')
-        username = payload['username']
-
-        # check token expiration
-        if (datetime.datetime.strptime(payload['expiration'], "%Y-%m-%dT%H:%M:%S.%f%z") 
-            <= datetime.datetime.now(datetime.timezone.utc)):
-            validity = False
-            errormsg = 'expired token'
-
-    except jwt.InvalidTokenError:
-        validity = False
-        errormsg = 'invalid token'
-    
-    return username, validity, errormsg
-
-
-
-'''
 Add a user to a class
 '''
 @router.post('/classes/add', response_model=AddClassResponse)
 async def add_class(request: AddUserToClassSpecification):
 
     # decode the token
-    user, valid, errormsg = decode_token(request)
+    user, valid, errormsg = decode_token(request.token)
 
     # confirm designation is 'student' or 'tutor'
     if request.designation not in ['student', 'tutor']:
@@ -142,7 +114,7 @@ async def load_classes(token: UserToken):
     classes = []
 
     # decode the token
-    user, valid, errormsg = decode_token(token)
+    user, valid, errormsg = decode_token(token.token)
 
     # retrieve the user's classes from the database
     if valid:

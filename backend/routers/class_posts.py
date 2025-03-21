@@ -22,7 +22,7 @@ class PostSpecification(BaseModel):
     token: str
     post_description: str
 
-class PostCreatedResponse:
+class PostCreatedResponse(BaseModel):
     valid: bool
     errormsg: str | None
 
@@ -35,7 +35,7 @@ Load a specific class
 '''
 @router.get('/class', response_model=ClassPosts)
 async def load_class(class_spec: ClassSpecification):
-    class_spec
+    return {'posts':[]}
 
 
 
@@ -44,4 +44,5 @@ Create a post within a specific class
 '''
 @router.post('/class/create-post', response_model=PostCreatedResponse)
 async def create_post(post_spec: PostSpecification):
-    post_spec
+    return {'valid': False,
+            'errormsg': 'nothing created yet....'}
