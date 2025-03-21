@@ -3,10 +3,8 @@ from pydantic import BaseModel
 from ..db_init import cursor
 from .login import decode_token
 from typing import Optional
-import jwt
 import os
 import requests
-import datetime
 import bcrypt
 
 router = APIRouter()

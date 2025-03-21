@@ -1,6 +1,3 @@
-import datetime
-import jwt
-import os
 from fastapi import APIRouter
 from pydantic import BaseModel
 from ..db_init import cursor
@@ -34,7 +31,7 @@ class AddClassResponse(BaseModel):
     errormsg: str | None
 
 class OneClass(BaseModel):
-    id: int
+    class_id: int
     name: str
 
 class LoadClassesResponse(BaseModel):
@@ -135,7 +132,7 @@ async def load_classes(token: UserToken):
         for i, one_class in enumerate(classes):
             id = one_class[0]
             name = ' '.join(item for item in one_class[1:])
-            classes[i] = {'id': id,
+            classes[i] = {'class_id': id,
                           'name': name}
 
     return {'username': user,

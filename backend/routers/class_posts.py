@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+from ..db_init import cursor
+from .login import decode_token
 
 router = APIRouter()
 
@@ -7,11 +9,12 @@ router = APIRouter()
 #           PYDANTIC MODELS            #
 ########################################
 
-class ClassSpecification(BaseModel):
+class OneClass(BaseModel):
     class_id: int
 
 class PostPreview(BaseModel):
-    pfp: str
+    post_id: int
+    pfp: str | None
     name: str
     rating: float | None
 
@@ -20,7 +23,8 @@ class ClassPosts(BaseModel):
 
 class PostSpecification(BaseModel):
     token: str
-    post_description: str
+    class_id: int
+    post_description: str | None
 
 class PostCreatedResponse(BaseModel):
     valid: bool
@@ -34,8 +38,27 @@ class PostCreatedResponse(BaseModel):
 Load a specific class
 '''
 @router.get('/class', response_model=ClassPosts)
-async def load_class(class_spec: ClassSpecification):
-    return {'posts':[]}
+async def load_class(class_spec: OneClass):
+
+    posts = []
+
+    # grab posts tied to the class, don't need to grab all information
+    # related to post, just enough to make a preview
+    cursor.execute('SELECT PostID, ProfilePicURL, Username, Rating '
+                   'FROM Posts AS p '
+                        'INNER JOIN Users AS u '
+                            'ON p.OwnerUserID = u.UserID '
+                    'WHERE OwnerCourseID = ?', class_spec.class_id)
+    posts = cursor.fetchall()
+
+    # format post previews
+    for i, post in enumerate(posts):
+        posts[i] = PostPreview(post_id = post[0],
+                               pfp = post[1],
+                               name = post[2],
+                               rating = post[3])
+
+    return {'posts': posts}
 
 
 
@@ -44,5 +67,21 @@ Create a post within a specific class
 '''
 @router.post('/class/create-post', response_model=PostCreatedResponse)
 async def create_post(post_spec: PostSpecification):
-    return {'valid': False,
-            'errormsg': 'nothing created yet....'}
+
+    # decode the user token
+    user, valid, errormsg = decode_token(post_spec.token)
+
+    if valid:
+        # grab the user's id
+        cursor.execute('SELECT UserID FROM Users WHERE Username = ?', user)
+        uid = cursor.fetchone()[0]
+
+        # create the new post
+        cursor.execute('INSERT INTO Posts '
+                       'VALUES (?, ?, NULL, ?)',
+                       (uid, post_spec.class_id, 
+                        post_spec.post_description))
+        cursor.commit()
+
+    return {'valid': valid,
+            'errormsg': errormsg}
