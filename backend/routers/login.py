@@ -30,10 +30,10 @@ class SignupResponse(BaseModel):
 #             FUNCTIONS                #
 ########################################
 
-"""
+'''
 Check if username and password follow alphanumeric and
 length rules
-"""
+'''
 def len_alphnum_check(username: str, password: str):
     
     validity = True
@@ -59,9 +59,9 @@ def len_alphnum_check(username: str, password: str):
 
 
 
-"""
+'''
 Allow user to login to the system
-"""
+'''
 @router.post('/login', response_model=LoginResponse)
 async def login(user: User):
 
@@ -100,9 +100,9 @@ async def login(user: User):
 
 
 
-"""
+'''
 Allow user to signup for the system
-"""
+'''
 @router.post('/signup', response_model=SignupResponse)
 async def signup(user: User):
 

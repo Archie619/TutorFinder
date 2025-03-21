@@ -68,9 +68,11 @@ def decode_token(user: User):
     
     return username, validity, errormsg
 
-"""
+
+
+'''
 Check if password follow alphanumeric and length rules
-"""
+'''
 def len_alphnum_check(password: str):
     
     validity = True
@@ -84,9 +86,11 @@ def len_alphnum_check(password: str):
     
     return validity, errormessage
 
+
+
 '''
- Frontend will send token in Authorization header, will prefix token with "Bearer "
- We extract token from decode_token -> retrieve info from database -> send back to frontend
+Frontend will send token in Authorization header, will prefix token with "Bearer "
+We extract token from decode_token -> retrieve info from database -> send back to frontend
 '''
 @router.get('/profile', response_model=ProfileGetResponse)
 async def profile(user: User):
@@ -115,6 +119,7 @@ async def profile(user: User):
                 'valid': valid,
                 'errormsg': errormsg}
         
+
 
 '''
 Change profile pic implementation
@@ -156,6 +161,8 @@ async def changeProfilePic(user: User = Header(...), userpicture: UserPicture = 
     return {'picture_url': display_url, 
             'valid': valid, 
             'errormsg': errormsg}
+
+
 
 '''
 Change password implementation
