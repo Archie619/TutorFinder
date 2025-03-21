@@ -1,9 +1,10 @@
 from fastapi import FastAPI
-from .routers import login, classes
+from .routers import login, classes, profile
 
 app = FastAPI()
 
 app.include_router(login.router)
+app.include_router(profile.router)
 app.include_router(classes.router)
 
 """ 
