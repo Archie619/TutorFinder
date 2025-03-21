@@ -102,4 +102,4 @@ async def test_load_classes(setup_and_teardown):
     # confirm validity and that the class we created/added our
     # dummy user to is returned
     assert response.valid
-    assert response.classes[0] == 'ABCD 1234 Intro to Pytest'
+    assert response.classes[0].name == 'ABCD 1234 Intro to Pytest'

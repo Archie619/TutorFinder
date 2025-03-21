@@ -33,9 +33,13 @@ class AddClassResponse(BaseModel):
     valid: bool
     errormsg: str | None
 
+class OneClass(BaseModel):
+    id: int
+    name: str
+
 class LoadClassesResponse(BaseModel):
     username: str | None
-    classes: list[str]
+    classes: list[OneClass]
     valid: bool
     errormsg: str | None
 
@@ -118,7 +122,7 @@ async def load_classes(token: UserToken):
 
     # retrieve the user's classes from the database
     if valid:
-        cursor.execute('SELECT CourseDept, CourseDeptID, CourseName '
+        cursor.execute('SELECT c.CourseID, CourseDept, CourseDeptID, CourseName '
                        'FROM Courses AS c '
                             'JOIN UserCourses AS uc '
                                 'ON c.CourseID = uc.CourseID '
@@ -127,9 +131,12 @@ async def load_classes(token: UserToken):
                        'WHERE u.Username = ?', (user,))
         classes = cursor.fetchall()
 
-        # format the tuples returned into a string
+        # format the tuples returned into a dict: class id and class name
         for i, one_class in enumerate(classes):
-            classes[i] = ' '.join(item for item in one_class)
+            id = one_class[0]
+            name = ' '.join(item for item in one_class[1:])
+            classes[i] = {'id': id,
+                          'name': name}
 
     return {'username': user,
             'classes': classes,
