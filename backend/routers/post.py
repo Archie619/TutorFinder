@@ -10,7 +10,7 @@ router = APIRouter()
 ########################################
 
 class PostSpecification(BaseModel):
-    token: str | None
+    token: str
     post_id: int
     rating: float | None
     search_username: str | None
@@ -39,6 +39,8 @@ class PostContacts(BaseModel):
 
 class PostUsers(BaseModel):
     users: list[str]
+    valid: bool
+    errormsg: str | None
 
 ########################################
 #             FUNCTIONS                #
@@ -189,4 +191,39 @@ username keywords
 '''
 @router.get('/post/search-users', response_model=PostUsers)
 async def search_users(post: PostSpecification):
-    return {'users': []}
+    
+    users = []
+
+    # decode the user token
+    user, valid, errormsg = decode_token(post.token)
+
+    if valid:
+        # grab the user's id
+        cursor.execute('SELECT UserID FROM Users WHERE Username = ?', user)
+        uid = cursor.fetchone()[0]
+
+        # if using a search user keyword, format a sub-command
+        if post.search_username:
+            subcommand = ' AND Username LIKE ?'
+            specs = (post.post_id, uid, '%' + post.search_username + '%')
+        else:
+            subcommand = ''
+            specs = (post.post_id, uid)
+
+        # search the DB for users in the post group 
+        # (minus the user making the request)
+        cursor.execute('SELECT Username '
+                       'FROM UserPosts AS up '
+                            'JOIN Users AS u '
+                                'ON up.UserID = u.UserID '
+                       'WHERE PostID = ? AND up.UserID <> ?' + subcommand, 
+                       specs)
+        users = cursor.fetchall()
+        
+        # format the returned rows into a list
+        for i, user in enumerate(users):
+            users[i] = user[0]
+
+    return {'users': users,
+            'valid': valid,
+            'errormsg': errormsg}
