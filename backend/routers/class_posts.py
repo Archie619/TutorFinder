@@ -17,6 +17,7 @@ class PostPreview(BaseModel):
     pfp: str | None
     name: str
     rating: float | None
+    post_type: str
 
 class ClassPosts(BaseModel):
     posts: list[PostPreview]
@@ -44,10 +45,13 @@ async def load_class(class_spec: OneClass):
 
     # grab posts tied to the class, don't need to grab all information
     # related to post, just enough to make a preview
-    cursor.execute('SELECT PostID, ProfilePicURL, Username, Rating '
+    cursor.execute('SELECT PostID, ProfilePicURL, Username, Rating, UserDesignation '
                    'FROM Posts AS p '
                         'INNER JOIN Users AS u '
                             'ON p.OwnerUserID = u.UserID '
+                        'INNER JOIN UserCourses AS uc '
+                            'ON p.OwnerCourseID = uc.CourseID AND '
+                                'u.UserID = uc.UserID '
                     'WHERE OwnerCourseID = ?', class_spec.class_id)
     posts = cursor.fetchall()
 
@@ -56,7 +60,8 @@ async def load_class(class_spec: OneClass):
         posts[i] = PostPreview(post_id = post[0],
                                pfp = post[1],
                                name = post[2],
-                               rating = post[3])
+                               rating = post[3],
+                               post_type = 'Study Buddy' if post[4] == 'student' else 'Tutor')
 
     return {'posts': posts}
 
@@ -78,7 +83,7 @@ async def create_post(post_spec: PostSpecification):
 
         # create the new post
         cursor.execute('INSERT INTO Posts '
-                       'VALUES (?, ?, NULL, ?)',
+                       'VALUES (?, ?, NULL, ?, 0)',
                        (uid, post_spec.class_id, 
                         post_spec.post_description))
         cursor.commit()

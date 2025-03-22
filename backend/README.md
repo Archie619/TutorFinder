@@ -55,7 +55,7 @@ In /scripts
 
 uvicorn backend.api_init:app --reload
 
-curl -X POST -H "Content-Type: application/json" -d "{\"username\":\"...\",\"password\":\"...\"}" http://localhost:8000/login
+curl -X POST -H "Content-Type: application/json" -d "{\"username\":\"...\",\"password\":\"...\"}" http://localhost:8000/login | jq
 
 To set Environment Variables to values with new lines, use powershell (@" "@)
 You must then restart your CMD windows for the changes to take effect

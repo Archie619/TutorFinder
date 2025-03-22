@@ -1,0 +1,192 @@
+from fastapi import APIRouter
+from pydantic import BaseModel
+from ..db_init import cursor
+from .login import decode_token
+
+router = APIRouter()
+
+########################################
+#           PYDANTIC MODELS            #
+########################################
+
+class PostSpecification(BaseModel):
+    token: str | None
+    post_id: int
+    rating: float | None
+    search_username: str | None
+
+class PostDetails(BaseModel):
+    pfp: str | None
+    name: str | None
+    rating: float | None
+    post_type: str | None
+    desc: str | None
+    joined: bool | None
+    valid: bool
+    errormsg: str | None
+
+class ConfirmationResponse(BaseModel):
+    valid: bool
+    errormsg: str | None
+
+class ConvoPreview(BaseModel):
+    pfp: str | None
+    name: str
+    message_id: int
+
+class PostContacts(BaseModel):
+    posts: list[ConvoPreview]
+
+class PostUsers(BaseModel):
+    users: list[str]
+
+########################################
+#             FUNCTIONS                #
+########################################
+
+'''
+Load a specific post
+'''
+@router.get('/post', response_model=PostDetails)
+async def load_post(post: PostSpecification):
+    
+    pfp = name = rating = desc = post_type = joined = None
+
+    # decode the user token
+    user, valid, errormsg = decode_token(post.token)
+
+    if valid:
+        # grab the user's id
+        cursor.execute('SELECT UserID FROM Users WHERE Username = ?', user)
+        uid = cursor.fetchone()[0]
+
+        # check if the user has already joined the post
+        cursor.execute('SELECT UserID FROM UserPosts WHERE UserID = ? AND PostID = ?', 
+                       (uid, post.post_id))
+        in_post = cursor.fetchone()
+
+        # joined status important for frontend to know if they need to
+        # ask user if they want to join the class or if they should load
+        # the messaging system
+        joined = True if in_post else False
+
+        # load the rest of the post: pfp of owner, name of owner,
+        # rating, and description
+        cursor.execute('SELECT ProfilePicURL, Username, Rating, Description, UserDesignation '
+                       'FROM Posts AS p '
+                            'JOIN Users AS u '
+                                'ON p.OwnerUserID = u.UserID '
+                            'JOIN UserCourses AS uc '
+                                'ON p.OwnerCourseId = uc.CourseID AND '
+                                    'u.UserID = uc.UserID '
+                       'WHERE PostID = ?', (post.post_id,))
+        post_tuple = cursor.fetchone()
+        
+        # parse out the different parts of the post
+        pfp = post_tuple[0]
+        name = post_tuple[1]
+        rating = post_tuple[2]
+        desc = post_tuple[3]
+        post_type = 'Study Buddy' if post_tuple[4] == 'student' else 'Tutor'
+        
+    return {'pfp': pfp,
+            'name': name,
+            'rating': rating,
+            'post_type': post_type,
+            'desc': desc,
+            'joined': joined,
+            'valid': valid,
+            'errormsg': errormsg}
+
+
+
+'''
+Allow a user to join a post group, this will link their
+UserID to a PostID
+'''
+@router.post('/post/join', response_model=ConfirmationResponse)
+async def add_user_to_post(post: PostSpecification):
+
+    # decode the user token
+    user, valid, errormsg = decode_token(post.token)
+
+    if valid:
+        # grab the user's id
+        cursor.execute('SELECT UserID FROM Users WHERE Username = ?', user)
+        uid = cursor.fetchone()[0]
+
+        # add the user to the post group
+        cursor.execute('INSERT INTO UserPosts VALUES (?, ?)', (uid, post.post_id))
+        cursor.commit()
+
+    return {'valid': valid,
+            'errormsg': errormsg}
+
+
+
+'''
+Allow a user to create a rating for the post, this is
+the rating of the tutor in the specific subject
+'''
+@router.post('/post/create-rating', response_model=ConfirmationResponse)
+async def rate(post: PostSpecification):
+
+    # decode the user token
+    user, valid, errormsg = decode_token(post.token)
+
+    if valid:
+        # confirm the user is in the post group (as well as not the post owner) 
+        # before they can rate
+        cursor.execute('SELECT UserID FROM Users WHERE Username = ?', user)
+        uid = cursor.fetchone()[0]
+
+        cursor.execute('SELECT UserID ' 
+                       'FROM UserPosts AS up '
+                            'JOIN Posts AS p '
+                                'ON up.PostID = p.PostID '
+                       'WHERE UserID = ? AND up.PostID = ? AND UserID <> OwnerUserID',
+                        (uid, post.post_id))
+        in_postgroup = cursor.fetchone()
+
+        if in_postgroup:
+            # grab the current rating for the post
+            cursor.execute('SELECT Rating, RatingsLeft FROM Posts WHERE PostID = ?', (post.post_id,))
+            rating_info = cursor.fetchone()
+
+            curr_rating = 0 if rating_info[0] is None else rating_info[0]
+
+            # calculate the new rating
+            new_ratings_left = rating_info[1] + 1
+            new_rating = ((curr_rating * rating_info[1]) + post.rating) / new_ratings_left
+
+            # update DB with new rating
+            cursor.execute('UPDATE Posts SET Rating = ?, RatingsLeft = ? '
+                           'WHERE PostID = ?', (new_rating, new_ratings_left, post.post_id))
+            cursor.commit()
+        else:
+            valid = False
+            errormsg = 'user does not belong to post group or is owner'
+
+    return {'valid': valid,
+            'errormsg': errormsg}
+
+
+
+'''
+Load a user's contacts for a specific post, it should
+be noted that this contact list is for contacts where
+a conversation has started already
+'''
+@router.get('/post/load-contacts', response_model=PostContacts)
+async def load_contacts(post: PostSpecification):
+    return {'posts': []}
+
+
+
+'''
+Search users within the post, can optionally search with
+username keywords
+'''
+@router.get('/post/search-users', response_model=PostUsers)
+async def search_users(post: PostSpecification):
+    return {'users': []}

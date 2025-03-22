@@ -38,16 +38,22 @@ async def setup_and_teardown():
     response_json = await login(user)
     token = LoginResponse(**response_json).token
 
-    # wait for tests in this module to complete
-    yield token, cid
-
     # grab the dummy user's UserID
     cursor.execute('SELECT UserID FROM Users WHERE Username = ?', (USERNAME,))
     uid = cursor.fetchone()[0]
 
+    # create a link between the dummy user and dummy class
+    cursor.execute('INSERT INTO UserCourses VALUES (?, ?, ?)', (uid, cid, "tutor"))
+    cursor.commit()
+
+    # wait for tests in this module to complete
+    yield token, cid
+
     # remove the dummy post from the DB
     cursor.execute('DELETE FROM Posts '
                    'WHERE OwnerCourseID = ?', (cid,))
+    # remove the dummy UserCourses link
+    cursor.execute('DELETE FROM UserCourses WHERE UserID = ?', (uid,))
     # remove the dummy user from the DB
     cursor.execute('DELETE FROM Users WHERE Username = ?', (USERNAME,))
     # remove the dummy class from the DB
