@@ -30,12 +30,14 @@ class ConfirmationResponse(BaseModel):
     errormsg: str | None
 
 class ConvoPreview(BaseModel):
-    pfp: str | None
-    name: str
-    message_id: int
+    pfps: list[str | None]
+    names: list[str]
+    conversation_id: int
 
 class PostContacts(BaseModel):
-    posts: list[ConvoPreview]
+    contacts: list[ConvoPreview]
+    valid: bool
+    errormsg : str | None
 
 class PostUsers(BaseModel):
     users: list[str]
@@ -181,7 +183,51 @@ a conversation has started already
 '''
 @router.get('/post/load-contacts', response_model=PostContacts)
 async def load_contacts(post: PostSpecification):
-    return {'posts': []}
+
+    contacts = []
+    
+    # decode the user token
+    user, valid, errormsg = decode_token(post.token)
+
+    if valid:
+        # grab the user id
+        cursor.execute('SELECT UserID FROM Users WHERE Username = ?', user)
+        uid = cursor.fetchone()[0]
+
+        # grab a preview for all conversations the user is involved in (for this post)
+        # also called a contact since it includes pfp(s) and username(s)
+        cursor.execute('SELECT ProfilePicURL, Username, uc.ConversationID '
+                       'FROM UserConversations AS uc '
+                            'JOIN Conversations AS c '
+                                'ON uc.ConversationID = c.ConversationID '
+                            'JOIN Users AS u '
+                                'ON uc.UserID = u.UserID '
+                       'WHERE PostID = ? AND uc.UserID <> ? AND '
+                             'uc.ConversationID IN (SELECT ConversationID '
+                                                   'FROM UserConversations '
+                                                   'WHERE UserID = ?) '
+                       'ORDER BY uc.ConversationID'
+                        ,(post.post_id, uid, uid))
+        rows = cursor.fetchall()
+
+        # iterate through the returned rows, making a contact 
+        # (conversation preview) for each conversation
+        participants = []
+        participants_pfps = []
+        for i, row in enumerate(rows):
+            participants.append(row[1])
+            participants_pfps.append(row[0])
+            # if last row or conversation id changes, make the contact
+            if i == len(rows) - 1 or row[2] != rows[i + 1][2]:
+                contacts.append({'pfps': participants_pfps,
+                                 'names': participants,
+                                 'conversation_id': row[2]})
+                participants = []
+                participants_pfps = []
+
+    return {'contacts': contacts,
+            'valid': valid,
+            'errormsg': errormsg}
 
 
 
