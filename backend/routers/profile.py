@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Header, UploadFile, File
 from pydantic import BaseModel
 from ..db_init import cursor
+from .login import decode_token
 from typing import Optional
-import jwt
 import os
 import requests
-import datetime
 import bcrypt
 
 router = APIRouter()
@@ -42,35 +41,8 @@ class PasswordChangeResponse(BaseModel):
 ########################################
 
 '''
-Decode a user token, check validity
-'''
-def decode_token(user: User):
-
-    username = None
-    validity = True
-    errormsg = None
-
-    try: 
-        payload = jwt.decode(user.token, 
-                             os.environ['TF_TokenizerKeyDecoder'],
-                             'RS256')
-        username = payload['username']
-
-        # check token expiration
-        if (datetime.datetime.strptime(payload['expiration'], "%Y-%m-%dT%H:%M:%S.%f%z") 
-            <= datetime.datetime.now(datetime.timezone.utc)):
-            validity = False
-            errormsg = 'expired token'
-
-    except jwt.InvalidTokenError:
-        validity = False
-        errormsg = 'invalid token'
-    
-    return username, validity, errormsg
-
-"""
 Check if password follow alphanumeric and length rules
-"""
+'''
 def len_alphnum_check(password: str):
     
     validity = True
@@ -84,15 +56,17 @@ def len_alphnum_check(password: str):
     
     return validity, errormessage
 
+
+
 '''
- Frontend will send token in Authorization header, will prefix token with "Bearer "
- We extract token from decode_token -> retrieve info from database -> send back to frontend
+Frontend will send token in Authorization header, will prefix token with "Bearer "
+We extract token from decode_token -> retrieve info from database -> send back to frontend
 '''
 @router.get('/profile', response_model=ProfileGetResponse)
 async def profile(user: User):
 
     # decode the token
-    username, valid, errormsg = decode_token(user)
+    username, valid, errormsg = decode_token(user.token)
 
     if valid:
         # Get info from database
@@ -116,13 +90,14 @@ async def profile(user: User):
                 'errormsg': errormsg}
         
 
+
 '''
 Change profile pic implementation
 '''
 @router.post('/profile/change_profile_pic', response_model=ProfilePostResponse)
 async def changeProfilePic(user: User = Header(...), userpicture: UserPicture = File(...)):
     
-    username, valid, errormsg = decode_token(user)
+    username, valid, errormsg = decode_token(user.token)
     display_url = None
     
     if valid:
@@ -157,13 +132,15 @@ async def changeProfilePic(user: User = Header(...), userpicture: UserPicture = 
             'valid': valid, 
             'errormsg': errormsg}
 
+
+
 '''
 Change password implementation
 '''
 @router.post('/profile/password-change', response_model=PasswordChangeResponse)
 async def changePassword(user: User):
 
-    username, valid, errormsg = decode_token(user)
+    username, valid, errormsg = decode_token(user.token)
 
     if valid:
 

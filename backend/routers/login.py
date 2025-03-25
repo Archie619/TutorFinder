@@ -30,10 +30,39 @@ class SignupResponse(BaseModel):
 #             FUNCTIONS                #
 ########################################
 
-"""
+'''
+Decode a user token, check validity
+'''
+def decode_token(token: str):
+
+    username = None
+    validity = True
+    errormsg = None
+
+    try: 
+        payload = jwt.decode(token, 
+                             os.environ['TF_TokenizerKeyDecoder'],
+                             'RS256')
+        username = payload['username']
+
+        # check token expiration
+        if (datetime.datetime.strptime(payload['expiration'], "%Y-%m-%dT%H:%M:%S.%f%z") 
+            <= datetime.datetime.now(datetime.timezone.utc)):
+            validity = False
+            errormsg = 'expired token'
+
+    except jwt.InvalidTokenError:
+        validity = False
+        errormsg = 'invalid token'
+    
+    return username, validity, errormsg
+
+
+
+'''
 Check if username and password follow alphanumeric and
 length rules
-"""
+'''
 def len_alphnum_check(username: str, password: str):
     
     validity = True
@@ -59,9 +88,9 @@ def len_alphnum_check(username: str, password: str):
 
 
 
-"""
+'''
 Allow user to login to the system
-"""
+'''
 @router.post('/login', response_model=LoginResponse)
 async def login(user: User):
 
@@ -100,9 +129,9 @@ async def login(user: User):
 
 
 
-"""
+'''
 Allow user to signup for the system
-"""
+'''
 @router.post('/signup', response_model=SignupResponse)
 async def signup(user: User):
 

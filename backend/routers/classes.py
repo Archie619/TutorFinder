@@ -1,9 +1,7 @@
-import datetime
-import jwt
-import os
 from fastapi import APIRouter
 from pydantic import BaseModel
 from ..db_init import cursor
+from .login import decode_token
 
 router = APIRouter()
 
@@ -32,9 +30,13 @@ class AddClassResponse(BaseModel):
     valid: bool
     errormsg: str | None
 
+class OneClass(BaseModel):
+    class_id: int
+    name: str
+
 class LoadClassesResponse(BaseModel):
     username: str | None
-    classes: list[str]
+    classes: list[OneClass]
     valid: bool
     errormsg: str | None
 
@@ -46,42 +48,13 @@ class SearchClassesResponse(BaseModel):
 ########################################
 
 '''
-Decode a user token, check validity
-'''
-def decode_token(usertoken: UserToken):
-
-    username = None
-    validity = True
-    errormsg = None
-
-    try: 
-        payload = jwt.decode(usertoken.token, 
-                             os.environ['TF_TokenizerKeyDecoder'],
-                             'RS256')
-        username = payload['username']
-
-        # check token expiration
-        if (datetime.datetime.strptime(payload['expiration'], "%Y-%m-%dT%H:%M:%S.%f%z") 
-            <= datetime.datetime.now(datetime.timezone.utc)):
-            validity = False
-            errormsg = 'expired token'
-
-    except jwt.InvalidTokenError:
-        validity = False
-        errormsg = 'invalid token'
-    
-    return username, validity, errormsg
-
-
-
-'''
 Add a user to a class
 '''
 @router.post('/classes/add', response_model=AddClassResponse)
 async def add_class(request: AddUserToClassSpecification):
 
     # decode the token
-    user, valid, errormsg = decode_token(request)
+    user, valid, errormsg = decode_token(request.token)
 
     # confirm designation is 'student' or 'tutor'
     if request.designation not in ['student', 'tutor']:
@@ -142,11 +115,11 @@ async def load_classes(token: UserToken):
     classes = []
 
     # decode the token
-    user, valid, errormsg = decode_token(token)
+    user, valid, errormsg = decode_token(token.token)
 
     # retrieve the user's classes from the database
     if valid:
-        cursor.execute('SELECT CourseDept, CourseDeptID, CourseName '
+        cursor.execute('SELECT c.CourseID, CourseDept, CourseDeptID, CourseName '
                        'FROM Courses AS c '
                             'JOIN UserCourses AS uc '
                                 'ON c.CourseID = uc.CourseID '
@@ -155,9 +128,12 @@ async def load_classes(token: UserToken):
                        'WHERE u.Username = ?', (user,))
         classes = cursor.fetchall()
 
-        # format the tuples returned into a string
+        # format the tuples returned into a dict: class id and class name
         for i, one_class in enumerate(classes):
-            classes[i] = ' '.join(item for item in one_class)
+            id = one_class[0]
+            name = ' '.join(item for item in one_class[1:])
+            classes[i] = {'class_id': id,
+                          'name': name}
 
     return {'username': user,
             'classes': classes,
