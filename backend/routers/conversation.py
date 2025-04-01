@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+import string
+import random
 from fastapi import APIRouter
-from webexpythonsdk import WebexAPI
 from pydantic import BaseModel
 from ..db_init import cursor
 from .login import decode_token
 
-webex_api = WebexAPI()
 router = APIRouter()
 
 ########################################
@@ -37,15 +36,8 @@ class ConfirmationResponse(BaseModel):
     valid: bool
     errormsg: str | None
 
-class MeetingSpecification(BaseModel):
-    conversation_id: int
-    service_provider: str
-    meeting_time: datetime | None
-
 class MeetingResponse(BaseModel):
     meeting_link: str | None
-    valid: bool
-    errormsg: str | None
 
 ########################################
 #             FUNCTIONS                #
@@ -159,24 +151,32 @@ async def store_message(msg_spec: MessageSpecification):
 Create a meeting for a conversation
 '''
 @router.post('/post/create-meeting', response_model=MeetingResponse)
-async def create_meeting(meeting_spec: MeetingSpecification):
+async def create_meeting(convo_spec: ConversationSpecification):
 
-    meeting = webex_api.meetings.create('Test Meeting', datetime.now().isoformat(),
-                                        (datetime.now() + timedelta(hours=1)).isoformat())
-    
-    print(meeting)
+    # create a random 40 character seed
+    seed = ''.join(random.choices(string.ascii_letters + string.digits, k=40))
 
-    return {'meeting_link': None,
-            'valid': False,
-            'errormsg': 'NOT IMPLEMENTED'}
+    # embed this seed in a jitsi link to make the meeting
+    meeting_link = f"https://meet.jit.si/TutorFinder-{seed}"
+
+    # link the meeting to the conversation that requested it
+    cursor.execute('UPDATE Conversations SET MeetingLink = ? WHERE ConversationID = ?',
+                   (meeting_link, convo_spec.conversation_id))
+    cursor.commit()
+
+    return {'meeting_link': meeting_link}
 
 
 
 '''
 Retrieve a meeting link for a previously created meeting
 '''
-@router.get('/post/load-meeting', response_model=ConversationSpecification)
+@router.get('/post/load-meeting', response_model=MeetingResponse)
 async def load_meeting(convo_spec: ConversationSpecification):
-    return {'meeting_link': None,
-            'valid': False,
-            'errormsg': 'NOT IMPLEMENTED'}
+
+    # retrieve the meeting link from the database
+    cursor.execute('SELECT MeetingLink FROM Conversations WHERE ConversationID = ?', 
+                   (convo_spec.conversation_id,))
+    meeting_link = cursor.fetchone()[0]
+
+    return {'meeting_link': meeting_link}
