@@ -1,0 +1,12 @@
+USERNAME_1 = 'XxJohnDoexX'
+USERNAME_2 = 'XxJaneDoexX'
+PASSWORD = 'abc123'
+DESIGNATION = 'student'
+DEPT = 'ABCD'
+ID = '1234'
+COURSENAME = 'Intro to Pytest'
+POST_DESCRIPTION = 'PYTEST TEST DESC'
+RATING = 4
+RATINGSLEFT = 1
+MESSAGE_1 = "Message 1 Test"
+MESSAGE_2 = "Message 2 Test"

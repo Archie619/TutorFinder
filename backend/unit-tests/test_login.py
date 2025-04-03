@@ -2,9 +2,7 @@ import pytest
 import pytest_asyncio
 from ..routers.login import login, signup, User, SignupResponse, LoginResponse
 from ..db_init import cursor
-
-USERNAME = 'XxJohnDoexX'
-PASSWORD = 'abc123'
+from .constants import USERNAME_1, PASSWORD
 
 ########################################
 #             FUNCTIONS                #
@@ -17,7 +15,7 @@ async def teardown():
     yield
     
     # remove dummy user from the DB
-    cursor.execute('DELETE FROM Users WHERE Username = ?', (USERNAME,))
+    cursor.execute('DELETE FROM Users WHERE Username = ?', (USERNAME_1,))
     cursor.commit()
 
 
@@ -25,7 +23,7 @@ async def teardown():
 @pytest.mark.asyncio
 async def test_signup():
     
-    signup_json = {'username': USERNAME, 
+    signup_json = {'username': USERNAME_1, 
                    'password': PASSWORD}
     user = User(**signup_json)
     response_json = await signup(user)
@@ -39,7 +37,7 @@ async def test_signup():
 @pytest.mark.asyncio
 async def test_login():
     
-    login_json = {'username': USERNAME,
+    login_json = {'username': USERNAME_1,
                   'password': PASSWORD}
     user = User(**login_json)
     response_json = await login(user)

@@ -1,84 +1,34 @@
 import pytest
 import pytest_asyncio
-from .test_classes import (build_dummy_user, kill_usercourse,
-                           kill_dummy_user, kill_course)
-from .test_class_posts import (build_dummy_class, build_dummy_usercourse_link,
-                               kill_post, POST_DESCRIPTION)
 from ..routers.post import (PostSpecification, PostDetails, ConfirmationResponse,
                             PostContacts, PostUsers, load_post, add_user_to_post,
                             rate, load_contacts, search_users)
 from ..db_init import cursor
-
-USERNAME_1 = 'TestUser1'
-USERNAME_2 = 'TestUser2'
-RATING = 4
-RATINGSLEFT = 1
+from .constants import POST_DESCRIPTION, USERNAME_1, USERNAME_2
+from .build_dummies import (build_user, build_class, 
+                           build_usercourse_link, build_post,
+                           build_conversation)
+from .kill_dummies import (kill_user, kill_course, kill_usercourse,
+                          kill_post, kill_userpost_link, kill_conversation,
+                          kill_conversation_tie)
 
 ########################################
 #             FUNCTIONS                #
 ########################################
 
-def build_dummy_post(uid, cid):
-    # create a dummy post
-    cursor.execute('INSERT INTO Posts '
-                   'VALUES (?, ?, ?, ?, ?)',
-                   (uid, cid, RATING, POST_DESCRIPTION, RATINGSLEFT))
-    cursor.commit()
-
-    # grab the dummy PostID
-    cursor.execute('SELECT PostID FROM Posts '
-                   'WHERE OwnerCourseID = ?', cid)
-    pid = cursor.fetchone()[0]
-    return pid
-
-
-
-def build_dummy_conversation(pid):
-    # create a conversation on the post
-    cursor.execute('INSERT INTO Conversations '
-                   'VALUES (?, ?)', (pid, None))
-    cursor.commit()
-
-    # grab the ConversationID
-    cursor.execute('SELECT ConversationID FROM Conversations '
-                   'WHERE PostID = ?', (pid,))
-    conv_id = cursor.fetchone()[0]
-    return conv_id
-
-
-
-def kill_userpost_link(uid):
-    # remove the link between the dummy user and dummy post
-    cursor.execute('DELETE FROM UserPosts WHERE UserID = ? ', (uid,))
-    cursor.commit()
-
-
-
-def kill_conversation(pid):
-    # remove the conversation linked to a dummy post
-    cursor.execute('DELETE FROM Conversations WHERE PostID = ? ', (pid,))
-    cursor.commit()
-
-
-
-def kill_conversation_tie(conv_id):
-    # remove the conversation link between users
-    cursor.execute('DELETE FROM UserConversations WHERE ConversationID = ?', conv_id)
-
-
-
 @pytest_asyncio.fixture(scope='module', autouse=True)
 async def setup_and_teardown():
 
     # create dummies as needed
-    uid_1, token_1 = await build_dummy_user(USERNAME_1)
-    uid_2, token_2 = await build_dummy_user(USERNAME_2)
-    cid = build_dummy_class()
-    build_dummy_usercourse_link(uid_1, cid)
-    build_dummy_usercourse_link(uid_2, cid)
-    pid = build_dummy_post(uid_1, cid)
-    conv_id = build_dummy_conversation(pid)
+    uid_1, token_1 = await build_user(USERNAME_1)
+    uid_2, token_2 = await build_user(USERNAME_2)
+    cid = build_class()
+    build_usercourse_link(uid_1, cid)
+    build_usercourse_link(uid_2, cid)
+    pid = build_post(uid_1, cid)
+    conv_id = build_conversation(pid)
 
+    # wait for tests in this module to complete
     yield token_1, token_2, pid, uid_1, uid_2, conv_id
 
     # wipe DB of test data
@@ -89,8 +39,8 @@ async def setup_and_teardown():
     kill_post(cid)
     kill_usercourse(uid_1)
     kill_usercourse(uid_2)
-    kill_dummy_user(uid_1)
-    kill_dummy_user(uid_2)
+    kill_user(uid_1)
+    kill_user(uid_2)
     kill_course()
 
 
