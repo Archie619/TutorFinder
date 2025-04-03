@@ -1,52 +1,30 @@
 import pytest
 import pytest_asyncio
 import datetime
-from ..routers.profile import (profile, changeProfilePic, 
+from ..routers.profile import (profile, 
                                changePassword, 
                                User as UserToken, 
                                PasswordChangeResponse,
                                ProfileGetResponse)
-from ..db_init import cursor
-from ..routers.login import login, signup, User, LoginResponse
+from .constants import USERNAME_1
+from .build_dummies import build_user
+from .kill_dummies import kill_user
 
 ########################################
 #             FUNCTIONS                #
 ########################################
 
-USERNAME = 'TestUser123'
-PASSWORD = 'Password123'
-
 @pytest_asyncio.fixture(scope='module', autouse=True)
 async def setup_and_teardown():
 
-    ################
-    # Create Dummy #
-    ################
-
-    user_json = {'username': USERNAME,
-                 'password': PASSWORD}
-    user = User(**user_json)
-
-    # signup/login the dummy
-    await signup(user) # Signup dummy
-    response_json = await login(user) # login dummy
-    token = LoginResponse(**response_json).token # Recieve token from login
-    
-    ################
-    # Test Profile #
-    ################
+    # create dummies as needed
+    uid, token = await build_user(USERNAME_1)
 
     # wait for tests in this module to complete
     yield token
 
-    ################
-    # Remove Dummy #
-    ################
-
-    # remove the dummy user from the DB
-    cursor.execute('DELETE FROM Users WHERE Username = ?', (USERNAME,))
-
-    cursor.commit()
+    # wipe DB of test data
+    kill_user(uid)
 
 
 
