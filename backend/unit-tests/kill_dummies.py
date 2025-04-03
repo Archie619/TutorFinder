@@ -52,12 +52,12 @@ def kill_conversation(pid):
 
 def kill_conversation_tie(conv_id):
     # remove the conversation link between users
-    cursor.execute('DELETE FROM UserConversations WHERE ConversationID = ?', conv_id)
+    cursor.execute('DELETE FROM UserConversations WHERE ConversationID = ?', (conv_id,))
     cursor.commit()
 
 
 
 def kill_message(conv_id):
     # remove dummy messages linked to a dummy conversation
-    cursor.execute('DELETE FROM Messages WHERE ConversationID = ?', conv_id)
+    cursor.execute('DELETE FROM Messages WHERE ConversationID = ?', (conv_id,))
     cursor.commit()

@@ -58,7 +58,7 @@ def build_post(uid, cid):
 
     # grab the dummy PostID
     cursor.execute('SELECT PostID FROM Posts '
-                   'WHERE OwnerCourseID = ?', cid)
+                   'WHERE OwnerCourseID = ?', (cid,))
     pid = cursor.fetchone()[0]
     return pid
 
