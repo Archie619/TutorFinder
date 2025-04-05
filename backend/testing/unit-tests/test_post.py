@@ -1,14 +1,14 @@
 import pytest
 import pytest_asyncio
-from ..routers.post import (PostSpecification, PostDetails, ConfirmationResponse,
+from ...routers.post import (PostSpecification, PostDetails, ConfirmationResponse,
                             PostContacts, PostUsers, load_post, add_user_to_post,
                             rate, load_contacts, search_users)
-from ..db_init import cursor
-from .constants import POST_DESCRIPTION, USERNAME_1, USERNAME_2
-from .build_dummies import (build_user, build_class, 
+from ...db_init import cursor
+from ..constants import POST_DESCRIPTION, USERNAME_1, USERNAME_2
+from ..build_dummies import (build_user, build_class, 
                            build_usercourse_link, build_post,
                            build_conversation)
-from .kill_dummies import (kill_user, kill_course, kill_usercourse,
+from ..kill_dummies import (kill_user, kill_course, kill_usercourse,
                           kill_post, kill_userpost_link, kill_conversation,
                           kill_conversation_tie)
 

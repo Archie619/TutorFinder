@@ -1,14 +1,14 @@
 import pytest
 import pytest_asyncio
 import datetime
-from ..routers.profile import (profile, 
+from ...routers.profile import (profile, 
                                changePassword, 
                                User as UserToken, 
                                PasswordChangeResponse,
                                ProfileGetResponse)
-from .constants import USERNAME_1
-from .build_dummies import build_user
-from .kill_dummies import kill_user
+from ..constants import USERNAME_1
+from ..build_dummies import build_user
+from ..kill_dummies import kill_user
 
 ########################################
 #             FUNCTIONS                #

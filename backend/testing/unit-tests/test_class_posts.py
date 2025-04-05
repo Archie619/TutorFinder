@@ -1,11 +1,11 @@
 import pytest
 import pytest_asyncio
-from ..routers.class_posts import (load_class, create_post, OneClass,
+from ...routers.class_posts import (load_class, create_post, OneClass,
                                    ClassPosts, PostCreatedResponse,
                                    PostSpecification)
-from .constants import USERNAME_1, POST_DESCRIPTION
-from .build_dummies import build_user, build_class, build_usercourse_link
-from .kill_dummies import kill_user, kill_course, kill_usercourse, kill_post
+from ..constants import USERNAME_1, POST_DESCRIPTION
+from ..build_dummies import build_user, build_class, build_usercourse_link
+from ..kill_dummies import kill_user, kill_course, kill_usercourse, kill_post
 
 ########################################
 #             FUNCTIONS                #
