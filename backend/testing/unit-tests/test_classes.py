@@ -1,13 +1,13 @@
 import pytest
 import pytest_asyncio
-from ..routers.classes import (search_classes, add_class, load_classes,
+from ...routers.classes import (search_classes, add_class, load_classes,
                                UserToken, ClassSpecification,
                                AddUserToClassSpecification, 
                                AddClassResponse, LoadClassesResponse,
                                SearchClassesResponse)
-from .constants import USERNAME_1, DESIGNATION, DEPT, ID, COURSENAME
-from .build_dummies import build_user
-from .kill_dummies import kill_course, kill_user, kill_usercourse
+from ..constants import USERNAME_1, DESIGNATION, DEPT, ID, COURSENAME
+from ..build_dummies import build_user
+from ..kill_dummies import kill_course, kill_user, kill_usercourse
 
 ########################################
 #             FUNCTIONS                #

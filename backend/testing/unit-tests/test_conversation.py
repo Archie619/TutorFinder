@@ -1,15 +1,15 @@
 import pytest
 import pytest_asyncio
-from ..routers.conversation import (AddConversationSpecification, ConvoCreationResponse,
+from ...routers.conversation import (AddConversationSpecification, ConvoCreationResponse,
                                     ConversationSpecification, ConvoMessages,
                                     MessageSpecification, ConfirmationResponse,
                                     MeetingResponse, add_conversation, load_conversation,
                                     store_message, create_meeting, load_meeting)
-from ..db_init import cursor
-from .constants import USERNAME_1, USERNAME_2, MESSAGE_1, MESSAGE_2
-from .build_dummies import (build_user, build_class, 
+from ...db_init import cursor
+from ..constants import USERNAME_1, USERNAME_2, MESSAGE_1, MESSAGE_2
+from ..build_dummies import (build_user, build_class, 
                            build_usercourse_link, build_post)
-from .kill_dummies import (kill_user, kill_course, kill_usercourse,
+from ..kill_dummies import (kill_user, kill_course, kill_usercourse,
                            kill_post, kill_userpost_link, kill_conversation,
                            kill_conversation_tie, kill_message)
 
