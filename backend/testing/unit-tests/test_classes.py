@@ -1,7 +1,6 @@
 import pytest
 import pytest_asyncio
 from ...routers.classes import (search_classes, add_class, load_classes,
-                               UserToken, ClassSpecification,
                                AddUserToClassSpecification, 
                                AddClassResponse, LoadClassesResponse,
                                SearchClassesResponse)

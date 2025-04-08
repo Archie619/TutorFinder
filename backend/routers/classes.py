@@ -115,7 +115,7 @@ async def load_classes(token_header: str = Header()):
     classes = []
 
     # decode the token
-    token = UserToken(token=token_header.replace("Bearer ", ""))
+    token = UserToken(token=token_header)
     user, valid, errormsg = decode_token(token.token)
 
     # retrieve the user's classes from the database
@@ -151,9 +151,9 @@ async def search_classes(dept_header: str = Header(),
                          id_header: str = Header(),
                          name_header: str = Header()):
     
-    spec = ClassSpecification(dept=dept_header.replace("Bearer ", ""),
-                              id=id_header.replace("Bearer ", ""),
-                              name=name_header.replace("Bearer ", ""))
+    spec = ClassSpecification(dept=dept_header,
+                              id=id_header,
+                              name=name_header)
 
     # base search command
     command = ('SELECT CourseDept, CourseDeptID, CourseName '

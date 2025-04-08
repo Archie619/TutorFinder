@@ -46,11 +46,7 @@ async def test_change_password(setup_and_teardown):
 @pytest.mark.asyncio
 async def test_get_profile(setup_and_teardown):
 
-    # create a user token specification
-    user_token_json = {'token': setup_and_teardown, 'password': "PasswordChanged"}
-    user_token_spec = UserToken(**user_token_json)
-
-    response_json = await profile(user_token_spec)
+    response_json = await profile(setup_and_teardown)
     response = ProfileGetResponse(**response_json)
 
     # confirm validity

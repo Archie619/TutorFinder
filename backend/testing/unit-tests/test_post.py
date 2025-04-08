@@ -48,16 +48,10 @@ async def setup_and_teardown():
 @pytest.mark.asyncio
 async def test_load_post(setup_and_teardown):
 
-    # create the spec
     token_1, token_2, pid, uid_1, uid_2, conv_id = setup_and_teardown
-    request_json = {'token': token_1,
-                    'post_id': pid,
-                    'rating': None,
-                    'search_username': None}
-    request = PostSpecification(**request_json)
 
     # request to load the dummy post
-    response_json = await load_post(request)
+    response_json = await load_post(token_1, pid)
     response = PostDetails(**response_json)
 
     # confirm correct post was pulled
@@ -121,13 +115,7 @@ async def test_rate(setup_and_teardown):
 @pytest.mark.asyncio
 async def test_load_contacts(setup_and_teardown):
 
-    # create the spec
     token_1, token_2, pid, uid_1, uid_2, conv_id = setup_and_teardown
-    request_json = {'token': token_1,
-                    'post_id': pid,
-                    'rating': 2,
-                    'search_username': None}
-    request = PostSpecification(**request_json)
 
     # create a tie to the conversation between the two dummies
     cursor.execute('INSERT INTO UserConversations '
@@ -137,7 +125,7 @@ async def test_load_contacts(setup_and_teardown):
     cursor.commit()
 
     # request to load contacts
-    response_json = await load_contacts(request)
+    response_json = await load_contacts(token_1, pid)
     response = PostContacts(**response_json)
 
     # confirm response was valid
@@ -151,15 +139,10 @@ async def test_load_contacts(setup_and_teardown):
 @pytest.mark.asyncio
 async def test_search_users(setup_and_teardown):
 
-    # create the spec
     token_1, token_2, pid, uid_1, uid_2, conv_id = setup_and_teardown
-    request_json = {'token': token_1,
-                    'post_id': pid,
-                    'rating': None,
-                    'search_username': USERNAME_2[int(len(USERNAME_2)/2):]}
-    request = PostSpecification(**request_json)
 
-    response_json = await search_users(request)
+    # request to search users
+    response_json = await search_users(token_1, pid, USERNAME_2[int(len(USERNAME_2)/2):])
     response = PostUsers(**response_json)
 
     # confirm search was performed correctly

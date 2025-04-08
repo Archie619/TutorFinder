@@ -1,6 +1,6 @@
 import pytest
 import pytest_asyncio
-from ...routers.class_posts import (load_class, create_post, OneClass,
+from ...routers.class_posts import (load_class, create_post,
                                    ClassPosts, PostCreatedResponse,
                                    PostSpecification)
 from ..constants import USERNAME_1, POST_DESCRIPTION
@@ -54,10 +54,9 @@ async def test_load_class(setup_and_teardown):
     
     # create the spec
     token, cid = setup_and_teardown
-    test_class = OneClass(**{'class_id': cid})
 
     # request to load the class
-    response_json = await load_class(test_class)
+    response_json = await load_class(cid)
     response = ClassPosts(**response_json)
 
     # confirm post was created

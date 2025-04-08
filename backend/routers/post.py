@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from pydantic import BaseModel
+from typing import Optional
 from ..db_init import cursor
 from .login import decode_token
 
@@ -52,9 +53,13 @@ class PostUsers(BaseModel):
 Load a specific post
 '''
 @router.get('/post', response_model=PostDetails)
-async def load_post(post: PostSpecification):
+async def load_post(token_header: str = Header(),
+                    post_id_header: int = Header()):
     
     pfp = name = rating = desc = post_type = joined = None
+
+    post = PostSpecification(token=token_header, post_id=post_id_header,
+                             rating=None, search_username=None)
 
     # decode the user token
     user, valid, errormsg = decode_token(post.token)
@@ -182,9 +187,13 @@ be noted that this contact list is for contacts where
 a conversation has started already
 '''
 @router.get('/post/load-contacts', response_model=PostContacts)
-async def load_contacts(post: PostSpecification):
+async def load_contacts(token_header: str = Header(),
+                        post_id_header: int = Header()):
 
     contacts = []
+
+    post = PostSpecification(token=token_header, post_id=post_id_header,
+                             rating=None, search_username=None)
     
     # decode the user token
     user, valid, errormsg = decode_token(post.token)
@@ -236,9 +245,14 @@ Search users within the post, can optionally search with
 username keywords
 '''
 @router.get('/post/search-users', response_model=PostUsers)
-async def search_users(post: PostSpecification):
+async def search_users(token_header: str = Header(),
+                       post_id_header: int = Header(),
+                       username_header: Optional[str] = Header(None)):
     
     users = []
+
+    post = PostSpecification(token=token_header, post_id=post_id_header,
+                             rating=None, search_username=username_header)
 
     # decode the user token
     user, valid, errormsg = decode_token(post.token)
