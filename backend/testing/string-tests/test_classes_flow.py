@@ -38,13 +38,7 @@ async def test_classes_flow(setup_and_teardown):
 
     token = setup_and_teardown
 
-    # make a search request for the created class
-    class_json = {'dept': DEPT,
-                  'id': ID,
-                  'name': COURSENAME}
-    class_spec = ClassSpecification(**class_json)
-
-    response_json = await search_classes(class_spec)
+    response_json = await search_classes(DEPT, ID, COURSENAME)
     response = SearchClassesResponse(**response_json)
 
     # confirm the created class is returned
@@ -64,11 +58,7 @@ async def test_classes_flow(setup_and_teardown):
     # confirm addition of the user to the class was successful
     assert response.valid
 
-    # make a request to the load the classes of the user
-    user_token_json = {'token': token}
-    user_token_spec = UserToken(**user_token_json)
-
-    response_json = await load_classes(user_token_spec)
+    response_json = await load_classes(token)
     response = LoadClassesResponse(**response_json)
 
     # confirm the class is in the user's class list

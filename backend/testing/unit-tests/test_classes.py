@@ -52,14 +52,8 @@ async def test_add_class(setup_and_teardown):
 @pytest.mark.asyncio
 async def test_search_classes():
 
-    # create a search specification based on the class we created above
-    class_json = {'dept': DEPT,
-                  'id': ID,
-                  'name': COURSENAME}
-    class_spec = ClassSpecification(**class_json)
-
     # make a search request for classes that match the specifications
-    response_json = await search_classes(class_spec)
+    response_json = await search_classes(DEPT, ID, COURSENAME)
     response = SearchClassesResponse(**response_json)
 
     # confirm the created class is returned
@@ -70,12 +64,8 @@ async def test_search_classes():
 @pytest.mark.asyncio
 async def test_load_classes(setup_and_teardown):
 
-    # create a user token specification
-    user_token_json = {'token': setup_and_teardown}
-    user_token_spec = UserToken(**user_token_json)
-
     # make a load request for the classes of that user
-    response_json = await load_classes(user_token_spec)
+    response_json = await load_classes(setup_and_teardown)
     response = LoadClassesResponse(**response_json)
 
     # confirm validity and that the class we created/added our
