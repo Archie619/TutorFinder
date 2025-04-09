@@ -1,6 +1,6 @@
 import string
 import random
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from pydantic import BaseModel
 from ..db_init import cursor
 from .login import decode_token
@@ -99,9 +99,11 @@ async def add_conversation(convo_spec: AddConversationSpecification):
 Load a conversation (conversation messages)
 '''
 @router.get('/post/load-conversation', response_model=ConvoMessages)
-async def load_conversation(convo_spec: ConversationSpecification):
+async def load_conversation(convo_header: int = Header()):
     
     convo = []
+
+    convo_spec = ConversationSpecification(conversation_id=convo_header)
 
     # grab all the messages from the conversation
     cursor.execute('SELECT Username, Message '
@@ -172,7 +174,9 @@ async def create_meeting(convo_spec: ConversationSpecification):
 Retrieve a meeting link for a previously created meeting
 '''
 @router.get('/post/load-meeting', response_model=MeetingResponse)
-async def load_meeting(convo_spec: ConversationSpecification):
+async def load_meeting(convo_header: int = Header()):
+
+    convo_spec = ConversationSpecification(conversation_id=convo_header)
 
     # retrieve the meeting link from the database
     cursor.execute('SELECT MeetingLink FROM Conversations WHERE ConversationID = ?', 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from pydantic import BaseModel
 from ..db_init import cursor
 from .login import decode_token
@@ -110,11 +110,12 @@ async def add_class(request: AddUserToClassSpecification):
 Retrieve user's classes, user determined by their token
 '''
 @router.get('/classes', response_model=LoadClassesResponse)
-async def load_classes(token: UserToken):
+async def load_classes(token_header: str = Header()):
 
     classes = []
 
     # decode the token
+    token = UserToken(token=token_header)
     user, valid, errormsg = decode_token(token.token)
 
     # retrieve the user's classes from the database
@@ -146,7 +147,13 @@ async def load_classes(token: UserToken):
 Search for classes given specifications
 '''
 @router.get('/classes/filter', response_model=SearchClassesResponse)
-async def search_classes(spec: ClassSpecification):
+async def search_classes(dept_header: str = Header(),
+                         id_header: str = Header(),
+                         name_header: str = Header()):
+    
+    spec = ClassSpecification(dept=dept_header,
+                              id=id_header,
+                              name=name_header)
 
     # base search command
     command = ('SELECT CourseDept, CourseDeptID, CourseName '

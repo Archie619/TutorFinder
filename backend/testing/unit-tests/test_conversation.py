@@ -106,12 +106,8 @@ async def test_store_message(setup_and_teardown):
 @pytest.mark.asyncio
 async def test_load_conversation():
 
-    # create the spec
-    request_json = {'conversation_id': conv_id}
-    request = ConversationSpecification(**request_json)
-
     # request to load the dummy conversation
-    response_json = await load_conversation(request)
+    response_json = await load_conversation(conv_id)
     response = ConvoMessages(**response_json)
 
     # confirm the dummy messages are returned
@@ -145,12 +141,8 @@ async def test_create_meeting():
 @pytest.mark.asyncio
 async def test_load_meeting():
 
-    # create the spec
-    request_json = {'conversation_id': conv_id}
-    request = ConversationSpecification(**request_json)
-
     # request to load the dummy meeting for the conversation
-    response_json = await load_meeting(request)
+    response_json = await load_meeting(conv_id)
     response = MeetingResponse(**response_json)
 
     # confirm the meeting link is the same as the one we just created

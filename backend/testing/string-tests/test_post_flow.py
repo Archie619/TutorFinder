@@ -1,10 +1,8 @@
 import pytest
 import pytest_asyncio
-from ...routers.class_posts import (load_class, create_post, OneClass,
-                                   ClassPosts, PostCreatedResponse,
+from ...routers.class_posts import (load_class, create_post, ClassPosts, PostCreatedResponse,
                                    PostSpecification as PostSpecificationClass)
-from ...routers.post import (PostSpecification as PostSpecificationPost,
-                             PostDetails, load_post)
+from ...routers.post import (PostDetails, load_post)
 from ..constants import USERNAME_1, POST_DESCRIPTION
 from ..build_dummies import build_user, build_class, build_usercourse_link
 from ..kill_dummies import kill_user, kill_course, kill_usercourse, kill_post
@@ -53,22 +51,14 @@ async def test_post_flow(setup_and_teardown):
     assert response.valid
 
     # request to view the class
-    request = OneClass(**{'class_id': cid})
-
-    response_json = await load_class(request)
+    response_json = await load_class(cid)
     response = ClassPosts(**response_json)
 
     # confirm the created post is returned
     assert response.posts[0].name == USERNAME_1
 
     # request to view the post (in detail)
-    request_json = {'token': token,
-                    'post_id': response.posts[0].post_id,
-                    'rating': None,
-                    'search_username': None}
-    request = PostSpecificationPost(**request_json)
-
-    response_json = await load_post(request)
+    response_json = await load_post(token, response.posts[0].post_id)
     response = PostDetails(**response_json)
 
     # confirm the created post loads

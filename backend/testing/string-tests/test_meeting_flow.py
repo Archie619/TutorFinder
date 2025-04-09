@@ -60,7 +60,7 @@ async def test_meeting_flow(setup_and_teardown):
     created_meeting = response.meeting_link
 
     # now request to load the meeting that was just created
-    response_json = await load_meeting(request)
+    response_json = await load_meeting(conv_id)
     response = MeetingResponse(**response_json)
 
     # confirm the same meeting is loaded

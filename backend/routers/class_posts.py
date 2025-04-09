@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from pydantic import BaseModel
 from ..db_init import cursor
 from .login import decode_token
@@ -39,9 +39,11 @@ class PostCreatedResponse(BaseModel):
 Load a specific class
 '''
 @router.get('/class', response_model=ClassPosts)
-async def load_class(class_spec: OneClass):
+async def load_class(class_header: int = Header()):
 
     posts = []
+
+    class_spec = OneClass(class_id=class_header)
 
     # grab posts tied to the class, don't need to grab all information
     # related to post, just enough to make a preview

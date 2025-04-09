@@ -4,8 +4,7 @@ from ...routers.post import (PostSpecification, ConfirmationResponse,
                              PostDetails, PostContacts, load_post, 
                              add_user_to_post, load_contacts)
 from ...routers.conversation import (AddConversationSpecification, ConvoCreationResponse,
-                                     ConversationSpecification, ConvoMessages,
-                                     MessageSpecification, add_conversation, 
+                                     ConvoMessages, MessageSpecification, add_conversation, 
                                      store_message, load_conversation)
 from ..constants import USERNAME_1, USERNAME_2, POST_DESCRIPTION, MESSAGE_1
 from ..build_dummies import (build_user, build_class, 
@@ -62,18 +61,12 @@ This test checks the view post -> join post -> create conversation ->
 send message -> view message flow
 '''
 @pytest.mark.asyncio
-async def test_post_flow(setup_and_teardown):
+async def test_message_flow(setup_and_teardown):
 
     token_1, token_2, pid = setup_and_teardown
 
     # request to view the post
-    request_json = {'token': token_1,
-                    'post_id': pid,
-                    'rating': None,
-                    'search_username': None}
-    request = PostSpecification(**request_json)
-
-    response_json = await load_post(request)
+    response_json = await load_post(token_1, pid)
     response = PostDetails(**response_json)
 
     # confirm the post was loaded
@@ -81,6 +74,12 @@ async def test_post_flow(setup_and_teardown):
     assert response.desc == POST_DESCRIPTION
 
     # request to join the loaded post
+    request_json = {'token': token_1,
+                    'post_id': pid,
+                    'rating': None,
+                    'search_username': None}
+    request = PostSpecification(**request_json)
+
     response_json = await add_user_to_post(request)
     response = ConfirmationResponse(**response_json)
 
@@ -115,13 +114,7 @@ async def test_post_flow(setup_and_teardown):
     assert response.valid
 
     # AS USER 2, request to load contacts
-    request_json = {'token': token_2,
-                    'post_id': pid,
-                    'rating': None,
-                    'search_username': None}
-    request = PostSpecification(**request_json)
-
-    response_json = await load_contacts(request)
+    response_json = await load_contacts(token_2, pid)
     response = PostContacts(**response_json)
 
     # confirm a contact with user 1 loads
@@ -129,10 +122,7 @@ async def test_post_flow(setup_and_teardown):
     assert response.contacts[0].names[0] == USERNAME_1
 
     # AS USER 2, request to view the conversation
-    request_json = {'conversation_id': response.contacts[0].conversation_id}
-    request = ConversationSpecification(**request_json)
-
-    response_json = await load_conversation(request)
+    response_json = await load_conversation(response.contacts[0].conversation_id)
     response = ConvoMessages(**response_json)
 
     # confirm the message sent by user 1 loads

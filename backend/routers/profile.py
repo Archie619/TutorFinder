@@ -59,11 +59,12 @@ def len_alphnum_check(password: str):
 
 
 '''
-Frontend will send token in Authorization header, will prefix token with "Bearer "
-We extract token from decode_token -> retrieve info from database -> send back to frontend
+Extract token from decode_token -> retrieve info from database -> send back to frontend
 '''
 @router.get('/profile', response_model=ProfileGetResponse)
-async def profile(user: User):
+async def profile(token_header: str = Header()):
+
+    user = User(token=token_header, password=None)
 
     # decode the token
     username, valid, errormsg = decode_token(user.token)
