@@ -138,13 +138,13 @@ class ConversationViewController: UIViewController, UITableViewDataSource, UITab
 
     private func submitRating(_ rating: Float) {
         let postId = conversationId // Assuming it's the same or accessible
-        let spec = PostSpecification(token: token, post_id: postId, rating: rating, search_username: nil)
+        //let spec = PostSpecification2(token: token, post_id: postId, rating: rating, search_username: nil)
         guard let url = URL(string: "http://<your-ip>:8000/post/create-rating") else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONEncoder().encode(spec)
+        //request.httpBody = try? JSONEncoder().encode(spec)
 
         URLSession.shared.dataTask(with: request) { _, _, _ in
             DispatchQueue.main.async {

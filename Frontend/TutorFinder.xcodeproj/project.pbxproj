@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2062A0A52DA85CC00078EB28 /* SDWebImage in Frameworks */ = {isa = PBXBuildFile; productRef = 2062A0A42DA85CC00078EB28 /* SDWebImage */; };
+		2062A0A72DA85CC00078EB28 /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2062A0A62DA85CC00078EB28 /* SDWebImageMapKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		202055BB2DA70F5E00C04360 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -59,6 +64,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2062A0A72DA85CC00078EB28 /* SDWebImageMapKit in Frameworks */,
+				2062A0A52DA85CC00078EB28 /* SDWebImage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,6 +133,8 @@
 			);
 			name = TutorFinder;
 			packageProductDependencies = (
+				2062A0A42DA85CC00078EB28 /* SDWebImage */,
+				2062A0A62DA85CC00078EB28 /* SDWebImageMapKit */,
 			);
 			productName = TutorFinder;
 			productReference = CE6804482D8B93E1004125CD /* TutorFinder.app */;
@@ -159,6 +168,9 @@
 			);
 			mainGroup = CE68043F2D8B93E1004125CD;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2062A0A32DA85CC00078EB28 /* XCRemoteSwiftPackageReference "SDWebImage" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CE6804492D8B93E1004125CD /* Products */;
 			projectDirPath = "";
@@ -459,6 +471,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2062A0A32DA85CC00078EB28 /* XCRemoteSwiftPackageReference "SDWebImage" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImage";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.21.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2062A0A42DA85CC00078EB28 /* SDWebImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2062A0A32DA85CC00078EB28 /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImage;
+		};
+		2062A0A62DA85CC00078EB28 /* SDWebImageMapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2062A0A32DA85CC00078EB28 /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImageMapKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CE6804402D8B93E1004125CD /* Project object */;
 }

@@ -1,24 +1,20 @@
 import UIKit
-
-struct PostItem {
-    let postId: Int
-    let posterName: String
-    let role: String // "Tutor" or "Study Buddy"
-    let description: String
-}
+import SDWebImage
 
 class ClassPostsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
     private let selectedClass: Class
-    private var posts: [PostItem] = []
+    private var posts: [PostPreview] = []
     private var expandedIndex: Int? = nil
 
     private let tableView = UITableView()
     private let addButton = UIButton(type: .system)
+    private var userToken: String
 
     // MARK: - Init
     init(classItem: Class) {
         self.selectedClass = classItem
+        userToken = UserDefaults.standard.string(forKey: "userToken") ?? "No token found"
         super.init(nibName: nil, bundle: nil)
         self.title = classItem.name
     }
@@ -32,7 +28,7 @@ class ClassPostsViewController: UIViewController, UITableViewDelegate, UITableVi
         view.backgroundColor = .systemBackground
         setupTableView()
         setupAddButton()
-        loadDummyPosts()
+        loadClass()
     }
 
     private func setupTableView() {
@@ -81,26 +77,45 @@ class ClassPostsViewController: UIViewController, UITableViewDelegate, UITableVi
             guard let self = self,
                   let desc = alert.textFields?.first?.text, !desc.isEmpty else { return }
 
-            let userRole = UserDefaults.standard.string(forKey: "userRole") ?? "Student"
-            let role = userRole.lowercased() == "tutor" ? "Tutor" : "Study Buddy"
-
-            let newPost = PostItem(postId: self.posts.count + 1,
-                                   posterName: "You",
-                                   role: role,
-                                   description: desc)
-            self.posts.append(newPost)
-            self.tableView.reloadData()
+            let specification = PostSpecification(
+                token: userToken,
+                class_id: selectedClass.class_id,
+                post_description: desc
+            )
+            
+            APIManager.shared.createPost(specification: specification) { [weak self] response in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    if response?.valid == true {
+                        self.showAlert(message: "Post added successfully!")
+                        self.loadClass()
+                    } else {
+                        self.showAlert(message: "Failed to add post")
+                    }
+                }
+            }
+            
         })
 
         present(alert, animated: true)
     }
 
-    private func loadDummyPosts() {
-        posts = [
-            PostItem(postId: 1, posterName: "Alice", role: "Tutor", description: "Available M/W/F 5-7pm, good with projects."),
-            PostItem(postId: 2, posterName: "Bob", role: "Study Buddy", description: "Looking to meet weekly to review chapters."),
-        ]
-        tableView.reloadData()
+    private func loadClass() {
+        APIManager.shared.loadClass(specification: selectedClass) { [weak self] response in
+            guard let self = self else { return }
+                        
+            DispatchQueue.main.async {
+                if let newPosts = response?.posts {
+                    self.posts = newPosts
+                    self.tableView.reloadData()
+                } else {
+                    self.showAlert(message: "No posts")
+                    return
+                }
+            }
+        }
+        
     }
 
     // MARK: - TableView
@@ -116,14 +131,24 @@ class ClassPostsViewController: UIViewController, UITableViewDelegate, UITableVi
         cell.configure(with: post, expanded: isExpanded)
         cell.joinButtonAction = { [weak self] in
             guard let self = self else { return }
-
-            let postVC = PostViewController()
-            postVC.postId = post.postId
-            postVC.token = UserDefaults.standard.string(forKey: "userToken") ?? ""
-            postVC.className = self.selectedClass.name
-
-            let nav = UINavigationController(rootViewController: postVC)
-            self.present(nav, animated: true)
+            
+            let specification = PostViewSpecification (token: userToken, post_id: post.post_id)
+            APIManager.shared.loadPost(specification: specification) { [weak self] response in
+            guard let self = self else { return }
+                            
+                DispatchQueue.main.async {
+                    if let response = response, response.valid != false {
+                        let post = PostDetails (pfp: response.pfp, name: response.name, rating: response.rating, post_type: response.post_type, desc: response.desc, joined: response.joined, valid: response.valid, errormsg: response.errormsg)
+                        let postVC = PostViewController(post: post)
+                        let nav = UINavigationController(rootViewController: postVC)
+                        self.present(nav, animated: true)
+                    } else {
+                        self.showAlert(message: "Error retrieving post.")
+                        return
+                    }
+                }
+            }
+            
         }
         return cell
     }
@@ -133,6 +158,13 @@ class ClassPostsViewController: UIViewController, UITableViewDelegate, UITableVi
         expandedIndex = (expandedIndex == indexPath.row) ? nil : indexPath.row
         tableView.reloadRows(at: [indexPath], with: .automatic)
     }
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
 }
 
 // MARK: - Custom Cell for Posts
@@ -141,6 +173,13 @@ class PostCell: UITableViewCell {
     private let titleLabel = UILabel()
     private let descriptionLabel = UILabel()
     private let joinButton = UIButton(type: .system)
+    private let profileImage: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 20
+        imageView.clipsToBounds = true
+        return imageView
+    }()
     
     var joinButtonAction: (() -> Void)?
     
@@ -158,19 +197,20 @@ class PostCell: UITableViewCell {
         descriptionLabel.font = .systemFont(ofSize: 14)
         descriptionLabel.numberOfLines = 0
         
-        joinButton.setTitle("Join Group", for: .normal)
+        joinButton.setTitle("Go to Group", for: .normal)
         joinButton.setTitleColor(.white, for: .normal)
         joinButton.backgroundColor = .systemBlue
         joinButton.layer.cornerRadius = 8
         joinButton.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
         joinButton.addTarget(self, action: #selector(joinTapped), for: .touchUpInside)
         
-        [titleLabel, descriptionLabel, joinButton].forEach {
+        [titleLabel, descriptionLabel, joinButton, profileImage].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
         
         NSLayoutConstraint.activate([
+            
             titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
@@ -181,14 +221,34 @@ class PostCell: UITableViewCell {
             
             joinButton.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 12),
             joinButton.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            joinButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
+            joinButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            
+            profileImage.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            profileImage.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
+            profileImage.widthAnchor.constraint(equalToConstant: 70),
+            profileImage.heightAnchor.constraint(equalToConstant: 70)
+            
         ])
     }
     
-    func configure(with post: PostItem, expanded: Bool) {
-        titleLabel.text = "\(post.role) Post - \(post.posterName)"
-        descriptionLabel.text = expanded ? post.description : ""
-        joinButton.isHidden = !expanded
+    func configure(with post: PostPreview, expanded: Bool) {
+        
+        titleLabel.text = "\(post.post_type) Post - \(post.name)"
+        if post.rating != nil {
+            descriptionLabel.text = post.rating.map { String(format: "%.1f", $0) } ?? "N/A"
+        } else {
+            descriptionLabel.text = "Rating: No Rating Yet"
+        }
+        
+        if post.pfp != nil {
+            // Show profile pic
+            let url = URL(string: post.pfp!)
+            profileImage.sd_setImage(with: url, placeholderImage: UIImage(systemName: "person.crop.circle"))
+        } else {
+            // Placeholder pic
+            profileImage.image = UIImage(systemName: "person.crop.circle")
+        }
+        
     }
     
     @objc private func joinTapped() {

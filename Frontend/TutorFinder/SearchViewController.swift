@@ -27,11 +27,9 @@ class SearchViewController: UIViewController {
     }
     
     override func viewDidLoad() {
-        print("test")
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        print(classes)
         tableView.reloadData()
     }
     
