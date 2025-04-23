@@ -15,10 +15,18 @@ class LoginViewController: UIViewController {
         let valid: Bool
         let errormsg: String?
     }
-    
+
     // MARK: - UI Components
     
     private let gradientLayer = CAGradientLayer()
+    
+    private let iconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "graduationcap.fill")
+        imageView.contentMode = .scaleAspectFit
+        imageView.tintColor = .white
+        return imageView
+    }()
     
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -46,14 +54,7 @@ class LoginViewController: UIViewController {
         textField.placeholder = "Password"
         textField.borderStyle = .roundedRect
         textField.backgroundColor = .white.withAlphaComponent(0.9)
-        
-        // If running test or in Debug, remove secureTextEntry to allow testLogin to access textField
-        #if DEBUG
-        textField.isSecureTextEntry = false
-        #else
-        textField.isSecureTextEntry = true
-        #endif
-        
+        textField.isSecureTextEntry = true // Turn to false for testing
         textField.autocapitalizationType = .none
         textField.accessibilityIdentifier = "passwordTextField"
         return textField
@@ -96,6 +97,7 @@ class LoginViewController: UIViewController {
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.white.cgColor
         button.layer.cornerRadius = 8
+        button.isHidden = true
         return button
     }()
     
@@ -107,6 +109,11 @@ class LoginViewController: UIViewController {
         setupUI()
         setupConstraints()
         setupActions()
+        
+        // Allows user to tap/swipe out of keyboard
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false 
+        view.addGestureRecognizer(tapGesture)
     }
     
     override func viewDidLayoutSubviews() {
@@ -131,12 +138,14 @@ class LoginViewController: UIViewController {
     // MARK: - UI Setup
     
     private func setupUI() {
+        stackView.addArrangedSubview(iconImageView)
         stackView.addArrangedSubview(titleLabel)
         stackView.addArrangedSubview(usernameTextField)
         stackView.addArrangedSubview(passwordTextField)
         stackView.addArrangedSubview(loginButton)
         stackView.addArrangedSubview(createAccountButton)
         stackView.addArrangedSubview(guestButton)
+        
         
         view.addSubview(stackView)
     }
@@ -164,6 +173,9 @@ class LoginViewController: UIViewController {
     }
     
     // MARK: - Actions
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
+    }
     
     @objc public func loginButtonTapped() {
         // Get text from text fields

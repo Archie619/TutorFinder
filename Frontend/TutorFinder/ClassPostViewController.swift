@@ -132,14 +132,14 @@ class ClassPostsViewController: UIViewController, UITableViewDelegate, UITableVi
         cell.joinButtonAction = { [weak self] in
             guard let self = self else { return }
             
-            let specification = PostViewSpecification (token: userToken, post_id: post.post_id)
+            let specification = PostViewSpecification (token: userToken, post_id: post.post_id, username_header: nil, rating: nil)
             APIManager.shared.loadPost(specification: specification) { [weak self] response in
             guard let self = self else { return }
                             
                 DispatchQueue.main.async {
                     if let response = response, response.valid != false {
                         let post = PostDetails (pfp: response.pfp, name: response.name, rating: response.rating, post_type: response.post_type, desc: response.desc, joined: response.joined, valid: response.valid, errormsg: response.errormsg)
-                        let postVC = PostViewController(post: post)
+                        let postVC = PostViewController(post: post, postID: specification.post_id)
                         let nav = UINavigationController(rootViewController: postVC)
                         self.present(nav, animated: true)
                     } else {

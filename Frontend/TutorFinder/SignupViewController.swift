@@ -45,6 +45,7 @@ class SignupViewController: UIViewController {
         textField.backgroundColor = .white.withAlphaComponent(0.9)
         textField.isSecureTextEntry = true
         textField.autocapitalizationType = .none
+        textField.textContentType = .oneTimeCode
         return textField
     }()
     
@@ -55,6 +56,7 @@ class SignupViewController: UIViewController {
         textField.backgroundColor = .white.withAlphaComponent(0.9)
         textField.isSecureTextEntry = true
         textField.autocapitalizationType = .none
+        textField.textContentType = .oneTimeCode
         return textField
     }()
     

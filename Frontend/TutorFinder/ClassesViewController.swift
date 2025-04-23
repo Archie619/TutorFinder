@@ -24,6 +24,24 @@ class ClassesViewController: UIViewController, UITabBarDelegate {
     private var isSearching = false
     private var userToken: String
     
+    let classesTab = UITabBarItem(
+        title: "Classes",
+        image: UIImage(systemName: "book"),
+        tag: 0
+    )
+    
+    let profileTab = UITabBarItem(
+        title: "Profile",
+        image: UIImage(systemName: "person.circle"),
+        tag: 2
+    )
+    
+    let messagesTab = UITabBarItem(
+        title: "Messages",
+        image: UIImage(systemName: "message.fill"),
+        tag: 1
+        )
+    
     // MARK: - Initialization
     
     init(token: String = UserDefaults.standard.string(forKey: "userToken") ?? "No token found") {
@@ -40,6 +58,7 @@ class ClassesViewController: UIViewController, UITabBarDelegate {
     // Reload Table everytime you go back to it
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        bottomNavBar.selectedItem = classesTab
         loadClasses()
     }
     
@@ -47,7 +66,6 @@ class ClassesViewController: UIViewController, UITabBarDelegate {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        loadClasses()
         setupBottomNavigation()
     }
     
@@ -114,14 +132,14 @@ class ClassesViewController: UIViewController, UITabBarDelegate {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-            addButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            addButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            addButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -15),
+            addButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -60),
             addButton.widthAnchor.constraint(equalToConstant: 50),
             addButton.heightAnchor.constraint(equalToConstant: 50),
             
             // Search button constraints
-            searchButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            searchButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            searchButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 15),
+            searchButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -60),
             searchButton.widthAnchor.constraint(equalToConstant: 50),
             searchButton.heightAnchor.constraint(equalToConstant: 50),
             
@@ -181,18 +199,6 @@ class ClassesViewController: UIViewController, UITabBarDelegate {
     // MARK: - Actions
     
     private func setupBottomNavigation() {
-        let classesTab = UITabBarItem(
-            title: "Classes",
-            image: UIImage(systemName: "book"),
-            tag: 0
-        )
-        
-        let profileTab = UITabBarItem(
-            title: "Profile",
-            image: UIImage(systemName: "person.circle"),
-            tag: 1
-        )
-        
         bottomNavBar.items = [classesTab, profileTab]
         bottomNavBar.selectedItem = classesTab
         bottomNavBar.delegate = self
@@ -212,7 +218,7 @@ class ClassesViewController: UIViewController, UITabBarDelegate {
     }
     
     private func showAddClassDialog() {
-        let alert = UIAlertController(title: "Add Class", message: "", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Add Class", message: "\n\n\n", preferredStyle: .alert)
         
         alert.addTextField { textField in
             textField.placeholder = "Department"
@@ -251,7 +257,7 @@ class ClassesViewController: UIViewController, UITabBarDelegate {
     }
     
     private func showSearchClassDialog() {
-        let alert = UIAlertController(title: "Search Classes", message: "\n\n\n", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Search Classes", message: "", preferredStyle: .alert)
         
         alert.addTextField { textField in
             textField.placeholder = "Department"
@@ -377,8 +383,24 @@ extension ClassesViewController: UISearchBarDelegate {
 extension ClassesViewController: UITabBarControllerDelegate {
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
         if item.tag == 1 {
-            let profileVC = ProfileViewController(token: userToken)
-            navigationController?.pushViewController(profileVC, animated: true)
+            DispatchQueue.main.async { // Go to main thread (currently on background thread from network request)
+                if let windowScene = self.view.window?.windowScene { // Update to class window
+                    let messagesVC = MessagesViewController()
+                    let navController = UINavigationController(rootViewController: messagesVC)
+                    windowScene.windows.first?.rootViewController = navController
+                    windowScene.windows.first?.makeKeyAndVisible()
+                }
+            }
+        }
+        if item.tag == 2 {
+            DispatchQueue.main.async { // Go to main thread (currently on background thread from network request)
+                if let windowScene = self.view.window?.windowScene { // Update to class window
+                    let profileVC = ProfileViewController(token: self.userToken)
+                    let navController = UINavigationController(rootViewController: profileVC)
+                    windowScene.windows.first?.rootViewController = navController
+                    windowScene.windows.first?.makeKeyAndVisible()
+                }
+            }
         }
     }
 }

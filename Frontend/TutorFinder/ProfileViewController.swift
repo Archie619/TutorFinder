@@ -5,7 +5,7 @@
 
 import UIKit
 
-class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITabBarDelegate {
     
     // MARK: - Properties
     private var userToken: String
@@ -14,11 +14,30 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
     // MARK: - UI Components
     private let profileImageView = UIImageView()
     private let nameLabel = UILabel()
-    // Removed emailLabel
+    private let bottomNavBar = UITabBar()
+
     private let ratingButton = UIButton(type: .system)
     private let subjectsButton = UIButton(type: .system)
     private let availabilityButton = UIButton(type: .system)
     private let logoutButton = UIButton(type: .system)
+    
+    let classesTab = UITabBarItem(
+        title: "Classes",
+        image: UIImage(systemName: "book"),
+        tag: 0
+    )
+    
+    let profileTab = UITabBarItem(
+        title: "Profile",
+        image: UIImage(systemName: "person.circle"),
+        tag: 2
+    )
+    
+    let messagesTab = UITabBarItem(
+        title: "Messages",
+        image: UIImage(systemName: "message.fill"),
+        tag: 1
+    )
 
     // MARK: - Initialization
     init(token: String) {
@@ -37,6 +56,12 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         setupUI()
         setupConstraints()
         loadProfileData()
+        setupBottomNavigation()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        bottomNavBar.selectedItem = profileTab
     }
 
     // MARK: - UI Setup
@@ -89,10 +114,14 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         logoutButton.layer.cornerRadius = 8
         logoutButton.addTarget(self, action: #selector(logoutButtonTapped), for: .touchUpInside)
         view.addSubview(logoutButton)
+        
+        //Bottom Navigation Bar
+        bottomNavBar.delegate = self
+        view.addSubview(bottomNavBar)
     }
 
     private func setupConstraints() {
-        [profileImageView, nameLabel, ratingButton, subjectsButton, availabilityButton, logoutButton].forEach {
+        [profileImageView, nameLabel, ratingButton, subjectsButton, availabilityButton, logoutButton, bottomNavBar].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
         
@@ -119,21 +148,32 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
             logoutButton.topAnchor.constraint(equalTo: availabilityButton.bottomAnchor, constant: 30),
             logoutButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             logoutButton.widthAnchor.constraint(equalToConstant: 200),
-            logoutButton.heightAnchor.constraint(equalToConstant: 50)
+            logoutButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            bottomNavBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bottomNavBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomNavBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            bottomNavBar.heightAnchor.constraint(equalToConstant: 49)
         ])
     }
 
     // MARK: - Data Loading
     private func loadProfileData() {
-        // Set dummy profile data (no email)
         nameLabel.text = username
+        bottomNavBar.selectedItem = profileTab
     }
     
     // MARK: - Actions
     @objc private func logoutButtonTapped() {
         UserDefaults.standard.removeObject(forKey: "userToken")
-        UserDefaults.standard.removeObject(forKey: "username")
-        navigationController?.popToRootViewController(animated: true)
+        DispatchQueue.main.async { // Go to main thread (currently on background thread from network request)
+            if let windowScene = self.view.window?.windowScene { // Update to class window
+                let loginVC = LoginViewController()
+                let navController = UINavigationController(rootViewController: loginVC)
+                windowScene.windows.first?.rootViewController = navController
+                windowScene.windows.first?.makeKeyAndVisible()
+            }
+        }
     }
     
     @objc private func didTapProfileImage() {
@@ -193,5 +233,42 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
         alert.addAction(save)
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         present(alert, animated: true)
+    }
+        
+    private func setupBottomNavigation() {
+        bottomNavBar.items = [classesTab, profileTab]
+        bottomNavBar.selectedItem = classesTab
+        bottomNavBar.delegate = self
+        
+        bottomNavBar.barTintColor = .white
+        bottomNavBar.tintColor = .purple
+        bottomNavBar.unselectedItemTintColor = .gray
+        bottomNavBar.isTranslucent = false
+    }
+}
+
+// MARK: - UITabBarDelegate
+extension ProfileViewController: UITabBarControllerDelegate {
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        if item.tag == 0 {
+            DispatchQueue.main.async { // Go to main thread (currently on background thread from network request)
+                if let windowScene = self.view.window?.windowScene { // Update to class window
+                    let classesVC = ClassesViewController()
+                    let navController = UINavigationController(rootViewController: classesVC)
+                    windowScene.windows.first?.rootViewController = navController
+                    windowScene.windows.first?.makeKeyAndVisible()
+                }
+            }
+        }
+        if item.tag == 1 {
+            DispatchQueue.main.async { // Go to main thread (currently on background thread from network request)
+                if let windowScene = self.view.window?.windowScene { // Update to class window
+                    let messagesVC = MessagesViewController()
+                    let navController = UINavigationController(rootViewController: messagesVC)
+                    windowScene.windows.first?.rootViewController = navController
+                    windowScene.windows.first?.makeKeyAndVisible()
+                }
+            }
+        }
     }
 }
