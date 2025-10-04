@@ -1,17 +1,15 @@
-//
-//  ProfileViewController.swift
-//  TutorFinder
-//
-
 import UIKit
 
-class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITabBarDelegate {
-    
-    // MARK: - Properties
-    private var userToken: String
-    private var username: String 
+final class ProfileViewController: UIViewController,
+                                   UIImagePickerControllerDelegate,
+                                   UINavigationControllerDelegate,
+                                   UITabBarDelegate {
 
-    // MARK: - UI Components
+    // MARK: - Properties (mock / state)
+    private var userToken: String
+    private var username: String
+
+    // MARK: - UI
     private let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     private let bottomNavBar = UITabBar()
@@ -20,30 +18,17 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
     private let subjectsButton = UIButton(type: .system)
     private let availabilityButton = UIButton(type: .system)
     private let logoutButton = UIButton(type: .system)
-    
-    let classesTab = UITabBarItem(
-        title: "Classes",
-        image: UIImage(systemName: "book"),
-        tag: 0
-    )
-    
-    let profileTab = UITabBarItem(
-        title: "Profile",
-        image: UIImage(systemName: "person.circle"),
-        tag: 2
-    )
-    
-    let messagesTab = UITabBarItem(
-        title: "Messages",
-        image: UIImage(systemName: "message.fill"),
-        tag: 1
-    )
 
-    // MARK: - Initialization
+    // MARK: - Init
+    /// Use this init when you have a token; for now you can pass an empty string (“”)
     init(token: String) {
         self.userToken = token
-        self.username = UserDefaults.standard.string(forKey: "username") ?? "Unknown"
+        // Mock username until backend connects
+        self.username = UserDefaults.standard.string(forKey: "username") ?? "Demo User"
         super.init(nibName: nil, bundle: nil)
+        tabBarItem = UITabBarItem(title: "Profile",
+                                  image: UIImage(systemName: "person.circle"),
+                                  tag: 2)
     }
 
     required init?(coder: NSCoder) {
@@ -53,222 +38,204 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
-        setupConstraints()
-        loadProfileData()
-        setupBottomNavigation()
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        bottomNavBar.selectedItem = profileTab
-    }
-
-    // MARK: - UI Setup
-    private func setupUI() {
         view.backgroundColor = .systemBackground
         title = "Profile"
 
-        // Edit Button
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(editProfileTapped))
-        
-        // Profile Picture
-        profileImageView.image = UIImage(systemName: "person.crop.circle.fill")
-        profileImageView.tintColor = UIColor.systemPurple
-        profileImageView.contentMode = .scaleAspectFill
-        profileImageView.layer.cornerRadius = 50
-        profileImageView.clipsToBounds = true
-        profileImageView.isUserInteractionEnabled = true
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapProfileImage))
-        profileImageView.addGestureRecognizer(tapGesture)
-        view.addSubview(profileImageView)
-
-        // Name Label
-        nameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        nameLabel.textAlignment = .center
-        view.addSubview(nameLabel)
-
-        // Rating Button
-        ratingButton.setTitle("⭐ 4.8 / 5.0", for: .normal)
-        ratingButton.setTitleColor(.white, for: .normal)
-        ratingButton.backgroundColor = UIColor.systemPurple
-        ratingButton.layer.cornerRadius = 8
-        view.addSubview(ratingButton)
-
-        // Subjects
-        subjectsButton.setTitle("Subjects: Math, Physics, Programming", for: .normal)
-        subjectsButton.setTitleColor(.label, for: .normal)
-        subjectsButton.addTarget(self, action: #selector(editSubjects), for: .touchUpInside)
-        view.addSubview(subjectsButton)
-
-        // Availability
-        availabilityButton.setTitle("Availability: Weekdays 4 PM - 8 PM", for: .normal)
-        availabilityButton.setTitleColor(.label, for: .normal)
-        availabilityButton.addTarget(self, action: #selector(editAvailability), for: .touchUpInside)
-        view.addSubview(availabilityButton)
-
-        // Logout Button
-        logoutButton.setTitle("Logout", for: .normal)
-        logoutButton.backgroundColor = .systemRed
-        logoutButton.tintColor = .white
-        logoutButton.layer.cornerRadius = 8
-        logoutButton.addTarget(self, action: #selector(logoutButtonTapped), for: .touchUpInside)
-        view.addSubview(logoutButton)
-        
-        //Bottom Navigation Bar
-        bottomNavBar.delegate = self
-        view.addSubview(bottomNavBar)
+        configureUI()
+        layoutUI()
+        applyMockData()
     }
 
-    private func setupConstraints() {
-        [profileImageView, nameLabel, ratingButton, subjectsButton, availabilityButton, logoutButton, bottomNavBar].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
+    // MARK: - UI Setup
+    private func configureUI() {
+        // Avatar
+        profileImageView.contentMode = .scaleAspectFill
+        profileImageView.clipsToBounds = true
+        profileImageView.layer.cornerRadius = 48
+        profileImageView.backgroundColor = .secondarySystemBackground
+        profileImageView.isUserInteractionEnabled = true
+        let tap = UITapGestureRecognizer(target: self, action: #selector(changeAvatarTapped))
+        profileImageView.addGestureRecognizer(tap)
+
+        // Name
+        nameLabel.font = .systemFont(ofSize: 22, weight: .semibold)
+        nameLabel.textAlignment = .center
+        nameLabel.textColor = .label
+
+        // Buttons
+        configurePrimaryButton(ratingButton, title: "Rating", action: #selector(ratingTapped))
+        configurePrimaryButton(subjectsButton, title: "Subjects", action: #selector(subjectsTapped))
+        configurePrimaryButton(availabilityButton, title: "Availability", action: #selector(availabilityTapped))
+        configureDestructiveButton(logoutButton, title: "Logout", action: #selector(logoutTapped))
+
+        // Bottom Tab Bar (local nav)
+        let classesTab = UITabBarItem(title: "Classes", image: UIImage(systemName: "book"), tag: 0)
+        let messagesTab = UITabBarItem(title: "Messages", image: UIImage(systemName: "message.fill"), tag: 1)
+        let profileTab = UITabBarItem(title: "Profile", image: UIImage(systemName: "person.circle"), tag: 2)
+
+        bottomNavBar.items = [classesTab, messagesTab, profileTab]
+        bottomNavBar.selectedItem = profileTab
+        bottomNavBar.delegate = self
+    }
+
+    private func configurePrimaryButton(_ button: UIButton, title: String, action: Selector) {
+        var config = UIButton.Configuration.filled()
+        config.title = title
+        config.baseBackgroundColor = .systemBlue
+        config.baseForegroundColor = .white
+        config.cornerStyle = .large
+        button.configuration = config
+        button.addTarget(self, action: action, for: .touchUpInside)
+    }
+
+    private func configureDestructiveButton(_ button: UIButton, title: String, action: Selector) {
+        var config = UIButton.Configuration.tinted()
+        config.title = title
+        config.baseBackgroundColor = .systemRed
+        config.baseForegroundColor = .systemRed
+        config.cornerStyle = .large
+        button.configuration = config
+        button.addTarget(self, action: action, for: .touchUpInside)
+    }
+
+    private func layoutUI() {
+        [profileImageView, nameLabel,
+         ratingButton, subjectsButton, availabilityButton, logoutButton,
+         bottomNavBar].forEach { v in
+            v.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(v)
         }
-        
+
         NSLayoutConstraint.activate([
-            profileImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            profileImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
             profileImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            profileImageView.widthAnchor.constraint(equalToConstant: 100),
-            profileImageView.heightAnchor.constraint(equalToConstant: 100),
+            profileImageView.widthAnchor.constraint(equalToConstant: 96),
+            profileImageView.heightAnchor.constraint(equalToConstant: 96),
 
-            nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 16),
-            nameLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 12),
+            nameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            nameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
 
-            ratingButton.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 16),
-            ratingButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            ratingButton.widthAnchor.constraint(equalToConstant: 150),
-            ratingButton.heightAnchor.constraint(equalToConstant: 40),
+            ratingButton.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 24),
+            ratingButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            ratingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            ratingButton.heightAnchor.constraint(equalToConstant: 48),
 
-            subjectsButton.topAnchor.constraint(equalTo: ratingButton.bottomAnchor, constant: 20),
-            subjectsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            subjectsButton.topAnchor.constraint(equalTo: ratingButton.bottomAnchor, constant: 12),
+            subjectsButton.leadingAnchor.constraint(equalTo: ratingButton.leadingAnchor),
+            subjectsButton.trailingAnchor.constraint(equalTo: ratingButton.trailingAnchor),
+            subjectsButton.heightAnchor.constraint(equalTo: ratingButton.heightAnchor),
 
-            availabilityButton.topAnchor.constraint(equalTo: subjectsButton.bottomAnchor, constant: 10),
-            availabilityButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            availabilityButton.topAnchor.constraint(equalTo: subjectsButton.bottomAnchor, constant: 12),
+            availabilityButton.leadingAnchor.constraint(equalTo: ratingButton.leadingAnchor),
+            availabilityButton.trailingAnchor.constraint(equalTo: ratingButton.trailingAnchor),
+            availabilityButton.heightAnchor.constraint(equalTo: ratingButton.heightAnchor),
 
-            logoutButton.topAnchor.constraint(equalTo: availabilityButton.bottomAnchor, constant: 30),
-            logoutButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            logoutButton.widthAnchor.constraint(equalToConstant: 200),
-            logoutButton.heightAnchor.constraint(equalToConstant: 50),
-            
+            logoutButton.topAnchor.constraint(equalTo: availabilityButton.bottomAnchor, constant: 20),
+            logoutButton.leadingAnchor.constraint(equalTo: ratingButton.leadingAnchor),
+            logoutButton.trailingAnchor.constraint(equalTo: ratingButton.trailingAnchor),
+            logoutButton.heightAnchor.constraint(equalTo: ratingButton.heightAnchor),
+
+            bottomNavBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             bottomNavBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomNavBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomNavBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            bottomNavBar.heightAnchor.constraint(equalToConstant: 49)
+            bottomNavBar.heightAnchor.constraint(equalToConstant: 56)
         ])
     }
 
-    // MARK: - Data Loading
-    private func loadProfileData() {
+    private func applyMockData() {
+        // name
         nameLabel.text = username
-        bottomNavBar.selectedItem = profileTab
+
+        // placeholder avatar
+        let config = UIImage.SymbolConfiguration(pointSize: 52, weight: .regular)
+        profileImageView.image = UIImage(systemName: "person.crop.circle.fill")?.applyingSymbolConfiguration(config)
+        profileImageView.tintColor = .tertiaryLabel
+        profileImageView.backgroundColor = .clear
     }
-    
+
     // MARK: - Actions
-    @objc private func logoutButtonTapped() {
-        UserDefaults.standard.removeObject(forKey: "userToken")
-        DispatchQueue.main.async { // Go to main thread (currently on background thread from network request)
-            if let windowScene = self.view.window?.windowScene { // Update to class window
-                let loginVC = LoginViewController()
-                let navController = UINavigationController(rootViewController: loginVC)
-                windowScene.windows.first?.rootViewController = navController
-                windowScene.windows.first?.makeKeyAndVisible()
-            }
-        }
-    }
-    
-    @objc private func didTapProfileImage() {
+    @objc private func changeAvatarTapped() {
+        // open photo picker (mock)
         let picker = UIImagePickerController()
         picker.delegate = self
         picker.sourceType = .photoLibrary
         present(picker, animated: true)
     }
 
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let selectedImage = info[.originalImage] as? UIImage {
-            profileImageView.image = selectedImage
+    @objc private func ratingTapped() {
+        // TODO: replace with real screen; for now just show a message
+        showToast("Rating tapped")
+    }
+
+    @objc private func subjectsTapped() {
+        showToast("Subjects tapped")
+    }
+
+    @objc private func availabilityTapped() {
+        showToast("Availability tapped")
+    }
+
+    @objc private func logoutTapped() {
+        // TODO: hook to backend logout later
+        showToast("Logged out (mock)")
+    }
+
+    // MARK: - UIImagePickerControllerDelegate
+    func imagePickerController(_ picker: UIImagePickerController,
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        if let image = info[.originalImage] as? UIImage {
+            profileImageView.image = image
         }
         dismiss(animated: true)
     }
 
-    @objc private func editProfileTapped() {
-        let alert = UIAlertController(title: "Edit Name", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = self.nameLabel.text
-        }
-        let save = UIAlertAction(title: "Save", style: .default) { _ in
-            if let newName = alert.textFields?.first?.text {
-                self.nameLabel.text = newName
-            }
-        }
-        alert.addAction(save)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(alert, animated: true)
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true)
     }
 
-    @objc private func editSubjects() {
-        let alert = UIAlertController(title: "Edit Subjects", message: "Comma separated", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = self.subjectsButton.title(for: .normal)?.replacingOccurrences(of: "Subjects: ", with: "")
-        }
-        let save = UIAlertAction(title: "Save", style: .default) { _ in
-            if let text = alert.textFields?.first?.text {
-                self.subjectsButton.setTitle("Subjects: \(text)", for: .normal)
-            }
-        }
-        alert.addAction(save)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(alert, animated: true)
-    }
-
-    @objc private func editAvailability() {
-        let alert = UIAlertController(title: "Edit Availability", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = self.availabilityButton.title(for: .normal)?.replacingOccurrences(of: "Availability: ", with: "")
-        }
-        let save = UIAlertAction(title: "Save", style: .default) { _ in
-            if let text = alert.textFields?.first?.text {
-                self.availabilityButton.setTitle("Availability: \(text)", for: .normal)
-            }
-        }
-        alert.addAction(save)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(alert, animated: true)
-    }
-        
-    private func setupBottomNavigation() {
-        bottomNavBar.items = [classesTab, profileTab]
-        bottomNavBar.selectedItem = classesTab
-        bottomNavBar.delegate = self
-        
-        bottomNavBar.barTintColor = .white
-        bottomNavBar.tintColor = .purple
-        bottomNavBar.unselectedItemTintColor = .gray
-        bottomNavBar.isTranslucent = false
-    }
-}
-
-// MARK: - UITabBarDelegate
-extension ProfileViewController: UITabBarControllerDelegate {
+    // MARK: - UITabBarDelegate (local nav)
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
-        if item.tag == 0 {
-            DispatchQueue.main.async { // Go to main thread (currently on background thread from network request)
-                if let windowScene = self.view.window?.windowScene { // Update to class window
-                    let classesVC = ClassesViewController()
-                    let navController = UINavigationController(rootViewController: classesVC)
-                    windowScene.windows.first?.rootViewController = navController
-                    windowScene.windows.first?.makeKeyAndVisible()
-                }
-            }
+        // Hook these to your app’s real navigation later
+        switch item.tag {
+        case 0: showToast("Switch to Classes")
+        case 1: showToast("Switch to Messages")
+        case 2: break // already here
+        default: break
         }
-        if item.tag == 1 {
-            DispatchQueue.main.async { // Go to main thread (currently on background thread from network request)
-                if let windowScene = self.view.window?.windowScene { // Update to class window
-                    let messagesVC = MessagesViewController()
-                    let navController = UINavigationController(rootViewController: messagesVC)
-                    windowScene.windows.first?.rootViewController = navController
-                    windowScene.windows.first?.makeKeyAndVisible()
-                }
-            }
+    }
+
+    // MARK: - Helpers
+    private func showToast(_ text: String) {
+        let alert = UIAlertController(title: nil, message: text, preferredStyle: .alert)
+        present(alert, animated: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            alert.dismiss(animated: true)
         }
     }
 }
+@objc private func ratingTapped() {
+    let vc = RatingViewController()
+    navigationController?.pushViewController(vc, animated: true)
+}
+
+@objc private func subjectsTapped() {
+    let vc = SubjectsViewController()
+    navigationController?.pushViewController(vc, animated: true)
+}
+
+@objc private func availabilityTapped() {
+    let vc = AvailabilityViewController()
+    navigationController?.pushViewController(vc, animated: true)
+}
+
+@objc private func logoutTapped() {
+    // TODO: Replace with backend logout later
+    let alert = UIAlertController(title: "Logout", message: "Logout tapped", preferredStyle: .alert)
+    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+    present(alert, animated: true, completion: nil)
+}
+ratingButton.addTarget(self, action: #selector(ratingTapped), for: .touchUpInside)
+subjectsButton.addTarget(self, action: #selector(subjectsTapped), for: .touchUpInside)
+availabilityButton.addTarget(self, action: #selector(availabilityTapped), for: .touchUpInside)
+logoutButton.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
